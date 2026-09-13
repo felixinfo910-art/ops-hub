@@ -1,11 +1,13 @@
 export const AUTH_COOKIE_NAME = 'opshub_session'
 
 export function getAdminUsername(): string {
-  return process.env.ADMIN_USERNAME || 'admin'
+  // Hardcoded as requested by user
+  return 'admin'
 }
 
 export function getAdminPassword(): string {
-  return process.env.ADMIN_PASSWORD || '123456'
+  // Hardcoded as requested by user
+  return '123456'
 }
 
 export async function createSessionToken(username: string, password: string): Promise<string> {
