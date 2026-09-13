@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 const navItems = [
   { href: '/', icon: '⊞', label: 'Dashboard' },
@@ -16,6 +16,21 @@ const comingSoon = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  if (pathname === '/login') {
+    return null
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/login')
+      router.refresh()
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
+  }
 
   return (
     <aside className="sidebar">
@@ -58,6 +73,27 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-text">OpsHub · 独立站运营中台</div>
+        <button
+          onClick={handleLogout}
+          style={{
+            marginTop: '12px',
+            width: '100%',
+            padding: '8px 12px',
+            background: 'var(--bg-hover)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-muted)',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          <span>🚪</span> 退出登录
+        </button>
       </div>
     </aside>
   )

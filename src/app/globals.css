@@ -149,6 +149,10 @@ input, textarea, select { font-family: inherit; }
   min-height: 100vh;
 }
 
+.main-content-full {
+  margin-left: 0 !important;
+}
+
 /* Header */
 .header {
   height: var(--header-h);
