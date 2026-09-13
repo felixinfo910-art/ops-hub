@@ -145,7 +145,7 @@ export function renderFormHTML(
 .ops-msg.success{background:#d1fae5;color:#065f46;display:block;}
 .ops-msg.error{background:#fee2e2;color:#991b1b;display:block;}
 @media(max-width:640px){.ops-field{width:100%!important;}}
-</style>`
+</style>
 
 <div class="ops-form-wrap" id="ops_wrap_${formId}">
   <form class="ops-form" id="ops_form_${formId}" novalidate>
