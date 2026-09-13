@@ -16,7 +16,9 @@ model Form {
   description    String?
   fields         String           // JSON: field configurations
   notifyEmail    String           // Email to receive submissions
-  styleTheme     String           @default("default") // default | dark | minimal
+  styleTheme     String           @default("default") // default | dark | minimal | green
+  styleConfig    String?          // JSON: custom style configuration
+  customCss      String?          // Custom CSS code
   successMessage String           @default("Thank you! We will contact you soon.")
   isActive       Boolean          @default(true)
   createdAt      DateTime         @default(now())

@@ -21,16 +21,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params
     const body = await req.json()
-    const { name, description, fields, notifyEmail, styleTheme, successMessage, isActive } = body
+    const { name, description, fields, notifyEmail, styleTheme, styleConfig, customCss, successMessage, isActive } = body
 
     const form = await prisma.form.update({
       where: { id: parseInt(id) },
       data: {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
-        ...(fields !== undefined && { fields: JSON.stringify(fields) }),
+        ...(fields !== undefined && { fields: typeof fields === 'string' ? fields : JSON.stringify(fields) }),
         ...(notifyEmail !== undefined && { notifyEmail }),
         ...(styleTheme !== undefined && { styleTheme }),
+        ...(styleConfig !== undefined && { styleConfig: typeof styleConfig === 'string' ? styleConfig : JSON.stringify(styleConfig) }),
+        ...(customCss !== undefined && { customCss }),
         ...(successMessage !== undefined && { successMessage }),
         ...(isActive !== undefined && { isActive }),
       },

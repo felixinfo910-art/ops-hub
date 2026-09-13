@@ -39,7 +39,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       fields,
       form.successMessage,
       form.styleTheme as 'default' | 'dark' | 'minimal',
-      submitEndpoint
+      submitEndpoint,
+      form.styleConfig,
+      form.customCss
     )
 
     return new NextResponse(html, {

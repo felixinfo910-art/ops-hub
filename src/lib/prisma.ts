@@ -50,6 +50,12 @@ export async function ensureDbInitialized() {
       );
     `)
     globalForPrisma.dbInitialized = true
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "styleConfig" TEXT;`)
+    } catch {}
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "customCss" TEXT;`)
+    } catch {}
   } catch (err) {
     console.error('Failed to auto-initialize SQLite database tables:', err)
   }

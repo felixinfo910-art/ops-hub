@@ -8,6 +8,21 @@ export interface FormField {
   width?: 'full' | 'half' // layout
 }
 
+export interface FormStyleConfig {
+  btnBg?: string
+  btnText?: string
+  btnRadius?: string
+  btnTextLabel?: string
+  btnFontSize?: string
+  inputRadius?: string
+  inputBg?: string
+  inputFontSize?: string
+  labelColor?: string
+  labelFontSize?: string
+  labelFontWeight?: string
+  formBg?: string
+}
+
 const themes = {
   default: {
     bg: 'transparent',
@@ -15,14 +30,19 @@ const themes = {
     primary: '#00563b',
     text: '#111827',
     label: '#111827',
+    labelFontSize: '14px',
+    labelFontWeight: '500',
     border: 'rgba(0,0,0,0.08)',
     inputBg: '#ffffff',
     inputRadius: '9999px',
+    inputFontSize: '14px',
     textareaRadius: '20px',
     btnText: '#ffffff',
     btnBg: '#00563b',
     btnHover: '#00442e',
     btnRadius: '9999px',
+    btnFontSize: '15px',
+    btnTextLabel: 'Submit 提交',
     font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
   green: {
@@ -31,14 +51,19 @@ const themes = {
     primary: '#00563b',
     text: '#111827',
     label: '#111827',
+    labelFontSize: '14px',
+    labelFontWeight: '500',
     border: 'rgba(0,0,0,0.08)',
     inputBg: '#ffffff',
     inputRadius: '9999px',
+    inputFontSize: '14px',
     textareaRadius: '20px',
     btnText: '#ffffff',
     btnBg: '#00563b',
     btnHover: '#00442e',
     btnRadius: '9999px',
+    btnFontSize: '15px',
+    btnTextLabel: 'Submit 提交',
     font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
   dark: {
@@ -47,14 +72,19 @@ const themes = {
     primary: '#6366f1',
     text: '#f1f5f9',
     label: '#cbd5e1',
+    labelFontSize: '14px',
+    labelFontWeight: '500',
     border: '#334155',
     inputBg: '#0f172a',
     inputRadius: '12px',
+    inputFontSize: '14px',
     textareaRadius: '12px',
     btnText: '#ffffff',
     btnBg: '#6366f1',
     btnHover: '#4f46e5',
     btnRadius: '9999px',
+    btnFontSize: '15px',
+    btnTextLabel: 'Submit 提交',
     font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
   minimal: {
@@ -63,14 +93,19 @@ const themes = {
     primary: '#18181b',
     text: '#18181b',
     label: '#3f3f46',
+    labelFontSize: '14px',
+    labelFontWeight: '500',
     border: '#e4e4e7',
     inputBg: '#fafafa',
     inputRadius: '8px',
+    inputFontSize: '14px',
     textareaRadius: '8px',
     btnText: '#ffffff',
     btnBg: '#18181b',
     btnHover: '#27272a',
     btnRadius: '8px',
+    btnFontSize: '15px',
+    btnTextLabel: 'Submit',
     font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
 }
@@ -81,9 +116,40 @@ export function renderFormHTML(
   fields: FormField[],
   successMessage: string,
   theme: keyof typeof themes = 'default',
-  submitEndpoint: string
+  submitEndpoint: string,
+  styleConfigRaw?: string | FormStyleConfig | null,
+  customCss?: string | null
 ): string {
-  const t = themes[theme] || themes.default
+  const baseT = themes[theme] || themes.default
+
+  let customCfg: FormStyleConfig = {}
+  if (styleConfigRaw) {
+    if (typeof styleConfigRaw === 'string') {
+      try { customCfg = JSON.parse(styleConfigRaw) } catch {}
+    } else {
+      customCfg = styleConfigRaw
+    }
+  }
+
+  const t = {
+    ...baseT,
+    bg: customCfg.formBg || baseT.bg,
+    formBg: customCfg.formBg || baseT.formBg,
+    primary: customCfg.btnBg || baseT.primary,
+    label: customCfg.labelColor || baseT.label,
+    labelFontSize: customCfg.labelFontSize || baseT.labelFontSize,
+    labelFontWeight: customCfg.labelFontWeight || baseT.labelFontWeight,
+    inputBg: customCfg.inputBg || baseT.inputBg,
+    inputRadius: customCfg.inputRadius || baseT.inputRadius,
+    inputFontSize: customCfg.inputFontSize || baseT.inputFontSize,
+    textareaRadius: customCfg.inputRadius === '9999px' ? '20px' : (customCfg.inputRadius || baseT.textareaRadius),
+    btnText: customCfg.btnText || baseT.btnText,
+    btnBg: customCfg.btnBg || baseT.btnBg,
+    btnHover: customCfg.btnBg || baseT.btnHover,
+    btnRadius: customCfg.btnRadius || baseT.btnRadius,
+    btnFontSize: customCfg.btnFontSize || baseT.btnFontSize,
+    btnTextLabel: customCfg.btnTextLabel || baseT.btnTextLabel,
+  }
 
   const renderField = (field: FormField): string => {
     const widthStyle = field.width === 'half' ? 'width:calc(50% - 8px);' : 'width:100%;'
@@ -130,21 +196,22 @@ export function renderFormHTML(
 .ops-form-title{font-size:20px;font-weight:700;color:${t.text};margin-bottom:24px;}
 .ops-fields{display:flex;flex-wrap:wrap;gap:16px;}
 .ops-field{display:flex;flex-direction:column;gap:8px;}
-.ops-label{font-size:14px;font-weight:500;color:${t.label};}
-.ops-input{width:100%;padding:14px 24px;border:1px solid ${t.border};border-radius:${t.inputRadius};font-size:14px;color:${t.text};background:${t.inputBg};outline:none;transition:border-color .15s,box-shadow .15s;font-family:${t.font};box-shadow:0 1px 3px rgba(0,0,0,.02);}
+.ops-label{font-size:${t.labelFontSize};font-weight:${t.labelFontWeight};color:${t.label};}
+.ops-input{width:100%;padding:14px 24px;border:1px solid ${t.border};border-radius:${t.inputRadius};font-size:${t.inputFontSize};color:${t.text};background:${t.inputBg};outline:none;transition:border-color .15s,box-shadow .15s;font-family:${t.font};box-shadow:0 1px 3px rgba(0,0,0,.02);}
 .ops-input:focus{border-color:${t.primary};box-shadow:0 0 0 3px ${t.primary}22;}
 .ops-textarea{border-radius:${t.textareaRadius};resize:vertical;min-height:120px;padding:16px 20px;}
 .ops-select{cursor:pointer;border-radius:${t.inputRadius};}
 .ops-file{padding:10px 18px;cursor:pointer;border-radius:${t.inputRadius};}
 .ops-submit-wrap{margin-top:24px;}
-.ops-submit{width:100%;padding:14px 28px;background:${t.btnBg};color:${t.btnText};border:none;border-radius:${t.btnRadius};font-size:15px;font-weight:600;cursor:pointer;transition:all .2s ease;font-family:${t.font};box-shadow:0 4px 12px rgba(0,86,59,.15);}
-.ops-submit:hover{background:${t.btnHover};transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,86,59,.25);}
+.ops-submit{width:100%;padding:14px 28px;background:${t.btnBg};color:${t.btnText};border:none;border-radius:${t.btnRadius};font-size:${t.btnFontSize};font-weight:600;cursor:pointer;transition:all .2s ease;font-family:${t.font};box-shadow:0 4px 12px rgba(0,86,59,.15);}
+.ops-submit:hover{background:${t.btnHover};opacity:0.92;transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,86,59,.25);}
 .ops-submit:active{transform:translateY(0);}
 .ops-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
 .ops-msg{margin-top:16px;padding:14px 18px;border-radius:12px;font-size:14px;display:none;}
 .ops-msg.success{background:#d1fae5;color:#065f46;display:block;}
 .ops-msg.error{background:#fee2e2;color:#991b1b;display:block;}
 @media(max-width:640px){.ops-field{width:100%!important;}}
+${customCss || ''}
 </style>
 
 <div class="ops-form-wrap" id="ops_wrap_${formId}">
@@ -160,7 +227,7 @@ export function renderFormHTML(
       ${fieldsHtml}
     </div>
     <div class="ops-submit-wrap">
-      <button type="submit" class="ops-submit" id="ops_btn_${formId}">Submit 提交</button>
+      <button type="submit" class="ops-submit" id="ops_btn_${formId}">${t.btnTextLabel}</button>
     </div>
     <div class="ops-msg" id="ops_msg_${formId}"></div>
   </form>
@@ -230,7 +297,7 @@ export function renderFormHTML(
     })
     .finally(function(){
       btn.disabled = false;
-      btn.textContent = 'Submit 提交';
+      btn.textContent = '${t.btnTextLabel}';
     });
   });
 })();

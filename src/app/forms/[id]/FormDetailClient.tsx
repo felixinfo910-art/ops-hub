@@ -72,6 +72,16 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
     styleTheme: initialForm.styleTheme || 'default',
     successMessage: initialForm.successMessage || '',
     isActive: initialForm.isActive ?? true,
+    customCss: (initialForm as any).customCss || '',
+    styleConfig: (() => {
+      try {
+        return typeof (initialForm as any).styleConfig === 'string'
+          ? JSON.parse((initialForm as any).styleConfig)
+          : ((initialForm as any).styleConfig || {})
+      } catch {
+        return {}
+      }
+    })(),
   })
 
   const [editingField, setEditingField] = useState<FormField | null>(null)
@@ -99,7 +109,11 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
       const res = await fetch(`/api/forms/${initialForm.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, fields }),
+        body: JSON.stringify({
+          ...form,
+          fields,
+          styleConfig: JSON.stringify(form.styleConfig),
+        }),
       })
       const data = await res.json()
       if (data.success) setSuccess('保存成功！')
@@ -258,17 +272,179 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
               </div>
             </div>
             <div className="card">
-              <div className="card-header"><div className="card-title">样式主题</div></div>
+              <div className="card-header"><div className="card-title">🎨 外观样式自定义 (Style Customizer)</div></div>
               <div className="card-body">
-                <div className="theme-grid">
-                  {THEMES.map(theme => (
-                    <div key={theme.value} className={`theme-option${form.styleTheme === theme.value ? ' selected' : ''}`} onClick={() => setForm({ ...form, styleTheme: theme.value })}>
-                      <div className="theme-preview" style={{ background: theme.bg, border: `1px solid ${theme.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ width: 40, height: 6, background: theme.color, borderRadius: 3 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  
+                  {/* Button Section */}
+                  <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10, color: 'var(--primary)' }}>🔘 提交按钮设置</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>按钮文案</label>
+                        <input
+                          className="form-input"
+                          value={form.styleConfig?.btnTextLabel ?? 'Submit'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, btnTextLabel: e.target.value }
+                          })}
+                        />
                       </div>
-                      <div className="theme-name">{theme.label}</div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>按钮背景色</label>
+                        <input
+                          type="color"
+                          style={{ width: '100%', height: 38, border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                          value={form.styleConfig?.btnBg || '#00563b'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, btnBg: e.target.value }
+                          })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>按钮字号</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.btnFontSize || '15px'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, btnFontSize: e.target.value }
+                          })}
+                        >
+                          <option value="13px">13px 小</option>
+                          <option value="14px">14px 标准</option>
+                          <option value="15px">15px 推荐</option>
+                          <option value="16px">16px 中大</option>
+                          <option value="18px">18px 特大</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>按钮圆角形状</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.btnRadius || '9999px'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, btnRadius: e.target.value }
+                          })}
+                        >
+                          <option value="9999px">全胶囊圆角 (Pill)</option>
+                          <option value="12px">12px 圆角</option>
+                          <option value="6px">6px 微圆角</option>
+                          <option value="0px">直角 (0px)</option>
+                        </select>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Input Fields Section */}
+                  <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10, color: 'var(--primary)' }}>📦 输入框设置</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>输入框字号</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.inputFontSize || '14px'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, inputFontSize: e.target.value }
+                          })}
+                        >
+                          <option value="12px">12px 小</option>
+                          <option value="13px">13px 较小</option>
+                          <option value="14px">14px 标准</option>
+                          <option value="15px">15px 推荐</option>
+                          <option value="16px">16px 大</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>输入框圆角</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.inputRadius || '9999px'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, inputRadius: e.target.value }
+                          })}
+                        >
+                          <option value="9999px">全胶囊圆角 (Pill)</option>
+                          <option value="12px">12px 圆角</option>
+                          <option value="8px">8px 微圆角</option>
+                          <option value="0px">直角 (0px)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Label Typography Section */}
+                  <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10, color: 'var(--primary)' }}>🏷️ 字段标签设置</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>标签颜色</label>
+                        <input
+                          type="color"
+                          style={{ width: '100%', height: 38, border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                          value={form.styleConfig?.labelColor || '#111827'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, labelColor: e.target.value }
+                          })}
+                        />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>标签字号</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.labelFontSize || '14px'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, labelFontSize: e.target.value }
+                          })}
+                        >
+                          <option value="12px">12px 小</option>
+                          <option value="13px">13px 较小</option>
+                          <option value="14px">14px 标准</option>
+                          <option value="15px">15px 中大</option>
+                          <option value="16px">16px 特大</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>标签字重</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.labelFontWeight || '500'}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, labelFontWeight: e.target.value }
+                          })}
+                        >
+                          <option value="400">400 正常</option>
+                          <option value="500">500 中等</option>
+                          <option value="600">600 加粗</option>
+                          <option value="700">700 粗体</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Custom CSS */}
+                  <div className="form-group">
+                    <label className="form-label">💻 自定义 CSS 代码 (Custom CSS)</label>
+                    <textarea
+                      className="form-input"
+                      rows={3}
+                      style={{ fontFamily: 'monospace', fontSize: 13 }}
+                      placeholder=".ops-submit { box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important; }"
+                      value={form.customCss || ''}
+                      onChange={e => setForm({ ...form, customCss: e.target.value })}
+                    />
+                    <div className="form-hint">支持编写原生 CSS 属性覆盖表单样式</div>
+                  </div>
+
                 </div>
               </div>
             </div>
