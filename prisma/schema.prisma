@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Form {
+  id             Int              @id @default(autoincrement())
+  name           String
+  description    String?
+  fields         String           // JSON: field configurations
+  notifyEmail    String           // Email to receive submissions
+  styleTheme     String           @default("default") // default | dark | minimal
+  successMessage String           @default("Thank you! We will contact you soon.")
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  submissions    FormSubmission[]
+}
+
+model FormSubmission {
+  id          Int      @id @default(autoincrement())
+  formId      Int
+  form        Form     @relation(fields: [formId], references: [id])
+  data        String   // JSON: submitted form data
+  ip          String?
+  country     String?
+  city        String?
+  userAgent   String?
+  pageUrl     String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmKeyword  String?
+  createdAt   DateTime @default(now())
+}
