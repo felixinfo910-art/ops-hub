@@ -7,8 +7,16 @@ import { renderFormHTML, FormField } from '@/lib/form-renderer'
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    const formId = parseInt(id, 10)
+    if (isNaN(formId)) {
+      return new NextResponse('<p style="color:red;">Invalid form ID.</p>', {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        status: 400,
+      })
+    }
+
     const form = await prisma.form.findUnique({
-      where: { id: parseInt(id), isActive: true },
+      where: { id: formId, isActive: true },
     })
 
     if (!form) {
@@ -20,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const fields: FormField[] = JSON.parse(form.fields)
     const host = req.headers.get('host') || '192.168.10.116:3000'
-    const protocol = req.headers.get('x-forwarded-proto') || 'http'
+    const protocol = req.headers.get('x-forwarded-proto') || 'https'
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
     const submitEndpoint = `${appUrl}/api/public/submit`
 
@@ -36,12 +44,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Access-Control-Allow-Origin': '*', // Allow WordPress sites to fetch
-        'Cache-Control': 'public, max-age=3600', // Cache 1 hour
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     })
-  } catch {
-    return new NextResponse('<p style="color:red;">Server error.</p>', {
+  } catch (err) {
+    console.error('Error rendering public form:', err)
+    return new NextResponse('<p style="color:red;">Form render error.</p>', {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
       status: 500,
     })
