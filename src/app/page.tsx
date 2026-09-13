@@ -4,16 +4,21 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 async function getStats() {
-  const [totalForms, totalSubmissions, recentSubmissions] = await Promise.all([
-    prisma.form.count(),
-    prisma.formSubmission.count(),
-    prisma.formSubmission.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: { form: { select: { name: true } } },
-    }),
-  ])
-  return { totalForms, totalSubmissions, recentSubmissions }
+  try {
+    const [totalForms, totalSubmissions, recentSubmissions] = await Promise.all([
+      prisma.form.count(),
+      prisma.formSubmission.count(),
+      prisma.formSubmission.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { form: { select: { name: true } } },
+      }),
+    ])
+    return { totalForms, totalSubmissions, recentSubmissions }
+  } catch (err) {
+    console.error('Database query error on dashboard:', err)
+    return { totalForms: 0, totalSubmissions: 0, recentSubmissions: [] }
+  }
 }
 
 export default async function DashboardPage() {
