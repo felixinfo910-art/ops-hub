@@ -10,46 +10,68 @@ export interface FormField {
 
 const themes = {
   default: {
-    bg: '#f8f9fb',
-    formBg: '#ffffff',
-    primary: '#2563eb',
+    bg: 'transparent',
+    formBg: 'transparent',
+    primary: '#00563b',
     text: '#111827',
-    label: '#374151',
-    border: '#d1d5db',
+    label: '#111827',
+    border: 'rgba(0,0,0,0.08)',
     inputBg: '#ffffff',
+    inputRadius: '9999px',
+    textareaRadius: '20px',
     btnText: '#ffffff',
-    btnBg: '#2563eb',
-    btnHover: '#1d4ed8',
-    radius: '8px',
-    font: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    btnBg: '#00563b',
+    btnHover: '#00442e',
+    btnRadius: '9999px',
+    font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  },
+  green: {
+    bg: 'transparent',
+    formBg: 'transparent',
+    primary: '#00563b',
+    text: '#111827',
+    label: '#111827',
+    border: 'rgba(0,0,0,0.08)',
+    inputBg: '#ffffff',
+    inputRadius: '9999px',
+    textareaRadius: '20px',
+    btnText: '#ffffff',
+    btnBg: '#00563b',
+    btnHover: '#00442e',
+    btnRadius: '9999px',
+    font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
   dark: {
-    bg: '#0f172a',
+    bg: 'transparent',
     formBg: '#1e293b',
     primary: '#6366f1',
     text: '#f1f5f9',
     label: '#cbd5e1',
     border: '#334155',
     inputBg: '#0f172a',
+    inputRadius: '12px',
+    textareaRadius: '12px',
     btnText: '#ffffff',
     btnBg: '#6366f1',
     btnHover: '#4f46e5',
-    radius: '8px',
-    font: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    btnRadius: '9999px',
+    font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
   minimal: {
-    bg: '#ffffff',
+    bg: 'transparent',
     formBg: '#ffffff',
     primary: '#18181b',
     text: '#18181b',
     label: '#3f3f46',
     border: '#e4e4e7',
     inputBg: '#fafafa',
+    inputRadius: '8px',
+    textareaRadius: '8px',
     btnText: '#ffffff',
     btnBg: '#18181b',
     btnHover: '#27272a',
-    radius: '4px',
-    font: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    btnRadius: '8px',
+    font: "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
   },
 }
 
@@ -103,27 +125,27 @@ export function renderFormHTML(
   return `
 <style>
 .ops-form-wrap *{box-sizing:border-box;margin:0;padding:0;}
-.ops-form-wrap{font-family:${t.font};background:${t.bg};padding:32px 24px;border-radius:12px;}
-.ops-form{background:${t.formBg};padding:32px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);}
+.ops-form-wrap{font-family:${t.font};background:${t.bg};padding:0;}
+.ops-form{background:${t.formBg};padding:0;}
 .ops-form-title{font-size:20px;font-weight:700;color:${t.text};margin-bottom:24px;}
 .ops-fields{display:flex;flex-wrap:wrap;gap:16px;}
-.ops-field{display:flex;flex-direction:column;gap:6px;}
+.ops-field{display:flex;flex-direction:column;gap:8px;}
 .ops-label{font-size:14px;font-weight:500;color:${t.label};}
-.ops-input{width:100%;padding:10px 14px;border:1px solid ${t.border};border-radius:${t.radius};font-size:14px;color:${t.text};background:${t.inputBg};outline:none;transition:border-color .15s,box-shadow .15s;font-family:${t.font};}
+.ops-input{width:100%;padding:14px 24px;border:1px solid ${t.border};border-radius:${t.inputRadius};font-size:14px;color:${t.text};background:${t.inputBg};outline:none;transition:border-color .15s,box-shadow .15s;font-family:${t.font};box-shadow:0 1px 3px rgba(0,0,0,.02);}
 .ops-input:focus{border-color:${t.primary};box-shadow:0 0 0 3px ${t.primary}22;}
-.ops-textarea{resize:vertical;min-height:110px;}
-.ops-select{cursor:pointer;}
-.ops-file{padding:8px 14px;cursor:pointer;}
+.ops-textarea{border-radius:${t.textareaRadius};resize:vertical;min-height:120px;padding:16px 20px;}
+.ops-select{cursor:pointer;border-radius:${t.inputRadius};}
+.ops-file{padding:10px 18px;cursor:pointer;border-radius:${t.inputRadius};}
 .ops-submit-wrap{margin-top:24px;}
-.ops-submit{width:100%;padding:12px 24px;background:${t.btnBg};color:${t.btnText};border:none;border-radius:${t.radius};font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;font-family:${t.font};}
-.ops-submit:hover{background:${t.btnHover};transform:translateY(-1px);}
+.ops-submit{width:100%;padding:14px 28px;background:${t.btnBg};color:${t.btnText};border:none;border-radius:${t.btnRadius};font-size:15px;font-weight:600;cursor:pointer;transition:all .2s ease;font-family:${t.font};box-shadow:0 4px 12px rgba(0,86,59,.15);}
+.ops-submit:hover{background:${t.btnHover};transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,86,59,.25);}
 .ops-submit:active{transform:translateY(0);}
 .ops-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-.ops-msg{margin-top:16px;padding:14px 16px;border-radius:${t.radius};font-size:14px;display:none;}
+.ops-msg{margin-top:16px;padding:14px 18px;border-radius:12px;font-size:14px;display:none;}
 .ops-msg.success{background:#d1fae5;color:#065f46;display:block;}
 .ops-msg.error{background:#fee2e2;color:#991b1b;display:block;}
-@media(max-width:640px){.ops-field{width:100%!important;}.ops-form{padding:20px;}}
-</style>
+@media(max-width:640px){.ops-field{width:100%!important;}}
+</style>`
 
 <div class="ops-form-wrap" id="ops_wrap_${formId}">
   <form class="ops-form" id="ops_form_${formId}" novalidate>

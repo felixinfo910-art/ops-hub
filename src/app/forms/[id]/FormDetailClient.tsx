@@ -217,6 +217,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
           {[
             { key: 'settings', label: '⚙️ 设置' },
             { key: 'fields', label: '◫ 字段' },
+            { key: 'preview', label: '👁️ 实时效果预览' },
             { key: 'submissions', label: `📥 询盘 (${submissionCount})` },
             { key: 'embed', label: '🔗 嵌入代码' }
           ].map(tab => (
@@ -366,6 +367,32 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Preview Tab */}
+        {activeTab === 'preview' && (
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">👁️ 表单实时效果预览 (Live Preview)</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>与 WordPress 嵌入渲染完全一致</div>
+            </div>
+            <div className="card-body">
+              <div style={{
+                background: '#e6ede8',
+                padding: 32,
+                borderRadius: 16,
+                maxWidth: 640,
+                margin: '0 auto',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+              }}>
+                <iframe
+                  src={`/api/public/forms/${initialForm.id}/render`}
+                  style={{ width: '100%', height: 480, border: 'none', background: 'transparent' }}
+                  title="Form Preview"
+                />
+              </div>
+            </div>
           </div>
         )}
 
