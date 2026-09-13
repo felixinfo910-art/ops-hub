@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, ensureDbInitialized } from '@/lib/prisma'
 import { sendEmail, buildSubmissionEmail } from '@/lib/email'
 import { FormField } from '@/lib/form-renderer'
 
@@ -7,6 +7,7 @@ import { FormField } from '@/lib/form-renderer'
 // Called by form submission from any WordPress site
 export async function POST(req: NextRequest) {
   try {
+    await ensureDbInitialized()
     const body = await req.json()
     const { form_id, page_url, referrer, utm_source, utm_medium, utm_campaign, utm_keyword, ...formData } = body
 

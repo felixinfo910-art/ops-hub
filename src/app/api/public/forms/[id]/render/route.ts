@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, ensureDbInitialized } from '@/lib/prisma'
 import { renderFormHTML, FormField } from '@/lib/form-renderer'
 
 // GET /api/public/forms/[id]/render
 // This is called by WordPress to get form HTML
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await ensureDbInitialized()
     const { id } = await params
     const formId = parseInt(id, 10)
     if (isNaN(formId)) {
