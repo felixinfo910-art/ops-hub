@@ -269,6 +269,19 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                     <span className="form-label" style={{ margin: 0 }}>表单启用</span>
                   </label>
                 </div>
+                <div className="form-group" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                  <label className="form-label">提交成功跳转链接 (Redirect URL)</label>
+                  <input 
+                    className="form-input" 
+                    placeholder="例如: https://example.com/thank-you" 
+                    value={form.styleConfig?.redirectUrl || ''} 
+                    onChange={e => setForm({
+                      ...form,
+                      styleConfig: { ...form.styleConfig, redirectUrl: e.target.value }
+                    })} 
+                  />
+                  <div className="form-hint">如果设置，用户提交表单成功后将自动跳转到此页面</div>
+                </div>
               </div>
             </div>
             <div className="card">
@@ -428,6 +441,22 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                           <option value="700">700 粗体</option>
                         </select>
                       </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>全局字体 (Font Family)</label>
+                        <select
+                          className="form-input form-select"
+                          value={form.styleConfig?.fontFamily || "'Outfit', 'Inter', -apple-system, sans-serif"}
+                          onChange={e => setForm({
+                            ...form,
+                            styleConfig: { ...form.styleConfig, fontFamily: e.target.value }
+                          })}
+                        >
+                          <option value="'Outfit', 'Inter', -apple-system, sans-serif">Outfit (现代圆润)</option>
+                          <option value="'Inter', -apple-system, sans-serif">Inter (苹果/现代)</option>
+                          <option value="'Roboto', sans-serif">Roboto (谷歌/经典)</option>
+                          <option value="'Times New Roman', Times, serif">Times New Roman (衬线)</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -563,7 +592,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                 boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
               }}>
                 <iframe
-                  src={`/api/public/forms/${initialForm.id}/render`}
+                  src={`/api/public/forms/${initialForm.id}/render?preview=1`}
                   style={{ width: '100%', height: 480, border: 'none', background: 'transparent' }}
                   title="Form Preview"
                 />

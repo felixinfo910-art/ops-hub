@@ -33,6 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
     const submitEndpoint = `${appUrl}/api/public/submit`
 
+    const isPreview = req.nextUrl.searchParams.get('preview') === '1'
     const html = renderFormHTML(
       form.id,
       form.name,
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       form.styleTheme as 'default' | 'dark' | 'minimal',
       submitEndpoint,
       form.styleConfig,
-      form.customCss
+      form.customCss,
+      isPreview
     )
 
     return new NextResponse(html, {

@@ -21,6 +21,8 @@ export interface FormStyleConfig {
   labelFontSize?: string
   labelFontWeight?: string
   formBg?: string
+  redirectUrl?: string
+  fontFamily?: string
 }
 
 const themes = {
@@ -118,7 +120,8 @@ export function renderFormHTML(
   theme: keyof typeof themes = 'default',
   submitEndpoint: string,
   styleConfigRaw?: string | FormStyleConfig | null,
-  customCss?: string | null
+  customCss?: string | null,
+  isPreview: boolean = false
 ): string {
   const baseT = themes[theme] || themes.default
 
@@ -149,6 +152,8 @@ export function renderFormHTML(
     btnRadius: customCfg.btnRadius || baseT.btnRadius,
     btnFontSize: customCfg.btnFontSize || baseT.btnFontSize,
     btnTextLabel: customCfg.btnTextLabel || baseT.btnTextLabel,
+    font: customCfg.fontFamily || baseT.font,
+    redirectUrl: customCfg.redirectUrl || '',
   }
 
   const renderField = (field: FormField): string => {
@@ -272,6 +277,18 @@ ${customCss || ''}
       if(el.name && el.type !== 'file') data[el.name] = el.value;
     });
 
+    var isPreview = ${isPreview};
+    if (isPreview) {
+      setTimeout(function(){
+        btn.disabled = false;
+        btn.textContent = '${t.btnTextLabel}';
+        msg.className = 'ops-msg success';
+        msg.textContent = '预览模式下不提交真实询盘 (Preview mode)';
+        msg.style.display = 'block';
+      }, 500);
+      return;
+    }
+
     fetch('${submitEndpoint}', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -284,6 +301,13 @@ ${customCss || ''}
         msg.textContent = '${successMessage}';
         msg.style.display = 'block';
         formEl.reset();
+        
+        var redirectUrl = '${t.redirectUrl}';
+        if (redirectUrl) {
+          setTimeout(function() {
+            window.top.location.href = redirectUrl;
+          }, 1500);
+        }
       } else {
         msg.className = 'ops-msg error';
         msg.textContent = res.message || 'Something went wrong. Please try again.';
