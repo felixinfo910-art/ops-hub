@@ -4,7 +4,8 @@ import { useState, FormEvent, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 function LoginForm() {
-  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('123456')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -13,8 +14,8 @@ function LoginForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!password.trim()) {
-      setError('请输入管理密码')
+    if (!username.trim() || !password.trim()) {
+      setError('请输入账号和密码')
       return
     }
 
@@ -25,7 +26,7 @@ function LoginForm() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       })
 
       const data = await res.json()
@@ -47,7 +48,7 @@ function LoginForm() {
   return (
     <div style={{
       width: '100%',
-      maxWidth: '400px',
+      maxWidth: '420px',
       background: 'rgba(30, 41, 59, 0.85)',
       backdropFilter: 'blur(12px)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -69,7 +70,7 @@ function LoginForm() {
           boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
         }}>⚡</div>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>OpsHub 运营管理中台</h1>
-        <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>请输入管理密码以登录中台</p>
+        <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>超级管理员登录</p>
       </div>
 
       {error && (
@@ -90,16 +91,38 @@ function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#cbd5e1', marginBottom: '8px' }}>
-            管理密码
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#cbd5e1', marginBottom: '6px' }}>
+            管理员账号
+          </label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="请输入管理员账号"
+            style={{
+              width: '100%',
+              padding: '12px 14px',
+              background: '#0f172a',
+              border: '1px solid #334155',
+              borderRadius: '8px',
+              color: '#f1f5f9',
+              fontSize: '14px',
+              outline: 'none',
+              transition: 'all 0.2s',
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#cbd5e1', marginBottom: '6px' }}>
+            登录密码
           </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="请输入登录密码"
-            autoFocus
+            placeholder="请输入密码"
             style={{
               width: '100%',
               padding: '12px 14px',
@@ -131,13 +154,13 @@ function LoginForm() {
             transition: 'all 0.2s'
           }}
         >
-          {loading ? '正在验证...' : '进入中台'}
+          {loading ? '正在验证...' : '立即登录中台'}
         </button>
       </form>
 
       <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
         <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-          默认初始密码: <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px', color: '#38bdf8' }}>admin123456</code>
+          管理员账号: <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px', color: '#38bdf8' }}>admin</code> &nbsp;|&nbsp; 密码: <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px', color: '#38bdf8' }}>123456</code>
         </p>
       </div>
     </div>

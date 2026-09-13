@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { AUTH_COOKIE_NAME, createSessionToken, getAdminPassword } from './lib/auth'
+import { AUTH_COOKIE_NAME, getExpectedToken } from './lib/auth'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
 
   // Verify authentication cookie
   const sessionCookie = request.cookies.get(AUTH_COOKIE_NAME)
-  const expectedToken = await createSessionToken(getAdminPassword())
+  const expectedToken = await getExpectedToken()
 
   if (!sessionCookie || sessionCookie.value !== expectedToken) {
     const loginUrl = new URL('/login', request.url)

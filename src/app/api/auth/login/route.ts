@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server'
-import { AUTH_COOKIE_NAME, createSessionToken, getAdminPassword } from '@/lib/auth'
+import { AUTH_COOKIE_NAME, createSessionToken, getAdminUsername, getAdminPassword } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { password } = body
+    const { username, password } = body
 
+    const expectedUsername = getAdminUsername()
     const expectedPassword = getAdminPassword()
 
-    if (!password || password !== expectedPassword) {
-      return NextResponse.json({ error: '密码错误，请重试' }, { status: 401 })
+    const inputUser = (username || '').trim().toLowerCase()
+    const expUser = expectedUsername.trim().toLowerCase()
+
+    if (inputUser !== expUser || password !== expectedPassword) {
+      return NextResponse.json({ error: '账号或密码错误，请重试' }, { status: 401 })
     }
 
-    const token = await createSessionToken(expectedPassword)
+    const token = await createSessionToken(expectedUsername, expectedPassword)
 
     const response = NextResponse.json({ success: true })
     response.cookies.set({

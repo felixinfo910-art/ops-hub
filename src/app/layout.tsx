@@ -25,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-CN">
       <head>
-        <meta name="robots" content="noindex, nofollow, noarchive" />
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+        <meta name="googlebot" content="noindex, nofollow, noarchive" />
+        <meta name="baiduspider" content="noindex, nofollow, noarchive" />
       </head>
       <body>
         <div className="layout">
