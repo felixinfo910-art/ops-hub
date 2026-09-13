@@ -8,7 +8,7 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
+      background: 'radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%)',
       padding: '20px',
     }}>
       <Suspense fallback={<div style={{ color: '#94a3b8' }}>加载中...</div>}>

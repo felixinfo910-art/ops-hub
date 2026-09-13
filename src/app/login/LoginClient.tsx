@@ -49,12 +49,12 @@ export default function LoginClient() {
     <div style={{
       width: '100%',
       maxWidth: '420px',
-      background: 'rgba(30, 41, 59, 0.85)',
+      background: 'rgba(255, 255, 255, 0.85)',
       backdropFilter: 'blur(12px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
+      border: '1px solid rgba(0, 0, 0, 0.1)',
       borderRadius: '16px',
       padding: '36px 32px',
-      boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+      boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
         <div style={{
@@ -69,8 +69,8 @@ export default function LoginClient() {
           margin: '0 auto 14px',
           boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
         }}>⚡</div>
-        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#f1f5f9', margin: '0 0 6px' }}>OpsHub 运营管理中台</h1>
-        <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>超级管理员登录</p>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>OpsHub 运营管理中台</h1>
+        <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>超级管理员登录</p>
       </div>
 
       {error && (
@@ -92,7 +92,7 @@ export default function LoginClient() {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#cbd5e1', marginBottom: '6px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
             管理员账号
           </label>
           <input
@@ -103,10 +103,10 @@ export default function LoginClient() {
             style={{
               width: '100%',
               padding: '12px 14px',
-              background: '#0f172a',
-              border: '1px solid #334155',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
               borderRadius: '8px',
-              color: '#f1f5f9',
+              color: '#0f172a',
               fontSize: '14px',
               outline: 'none',
               transition: 'all 0.2s',
@@ -115,7 +115,7 @@ export default function LoginClient() {
         </div>
 
         <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#cbd5e1', marginBottom: '6px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
             登录密码
           </label>
           <input
@@ -126,10 +126,10 @@ export default function LoginClient() {
             style={{
               width: '100%',
               padding: '12px 14px',
-              background: '#0f172a',
-              border: '1px solid #334155',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
               borderRadius: '8px',
-              color: '#f1f5f9',
+              color: '#0f172a',
               fontSize: '14px',
               outline: 'none',
               transition: 'all 0.2s',
@@ -158,9 +158,9 @@ export default function LoginClient() {
         </button>
       </form>
 
-      <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+      <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
         <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-          管理员账号: <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px', color: '#38bdf8' }}>admin</code> &nbsp;|&nbsp; 密码: <code style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px', color: '#38bdf8' }}>123456</code>
+          管理员账号: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#3b82f6' }}>admin</code> &nbsp;|&nbsp; 密码: <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#3b82f6' }}>123456</code>
         </p>
       </div>
     </div>

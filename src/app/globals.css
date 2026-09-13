@@ -1,29 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg: #0f172a;
-  --bg-card: #1e293b;
-  --bg-hover: #263348;
-  --border: #334155;
-  --border-light: #1e293b;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text: #0f172a;
+  --text-muted: #475569;
   --text-subtle: #64748b;
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: #6366f115;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #eff6ff;
   --success: #10b981;
-  --success-light: #10b98115;
+  --success-light: #d1fae5;
   --danger: #ef4444;
-  --danger-light: #ef444415;
+  --danger-light: #fee2e2;
   --warning: #f59e0b;
-  --warning-light: #f59e0b15;
+  --warning-light: #fef3c7;
   --sidebar-w: 240px;
   --header-h: 60px;
   --radius: 10px;
   --radius-sm: 6px;
-  --shadow: 0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
-  --shadow-lg: 0 10px 25px rgba(0,0,0,.4);
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
