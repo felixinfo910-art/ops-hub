@@ -71,20 +71,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 })
     }
 
+    const parsedCompanyId = companyId && !isNaN(parseInt(companyId, 10)) ? parseInt(companyId, 10) : null
+    const parsedWebsiteId = websiteId && !isNaN(parseInt(websiteId, 10)) ? parseInt(websiteId, 10) : null
+
     const form = await prisma.form.create({
       data: {
         name,
-        companyId: companyId ? parseInt(companyId, 10) : null,
-        websiteId: websiteId ? parseInt(websiteId, 10) : null,
+        companyId: parsedCompanyId,
+        websiteId: parsedWebsiteId,
         description: description || null,
         fields: typeof fields === 'string' ? fields : JSON.stringify(fields),
         notifyEmail: notifyEmail || '',
         styleTheme: styleTheme || 'default',
         successMessage: successMessage || 'Thank you! We will contact you soon.',
         autoReplyEnabled: Boolean(autoReplyEnabled),
-        autoReplySubject: autoReplySubject ? autoReplySubject.trim() : null,
-        autoReplyBody: autoReplyBody ? autoReplyBody.trim() : null,
-        autoReplyCatalogUrl: autoReplyCatalogUrl ? autoReplyCatalogUrl.trim() : null,
+        autoReplySubject: autoReplySubject ? String(autoReplySubject).trim() : null,
+        autoReplyBody: autoReplyBody ? String(autoReplyBody).trim() : null,
+        autoReplyCatalogUrl: autoReplyCatalogUrl ? String(autoReplyCatalogUrl).trim() : null,
       },
     })
 

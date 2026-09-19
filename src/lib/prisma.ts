@@ -50,12 +50,21 @@ export async function ensureDbInitialized() {
       );
     `)
     globalForPrisma.dbInitialized = true
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "styleConfig" TEXT;`)
-    } catch {}
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "customCss" TEXT;`)
-    } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "companyId" INTEGER;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "websiteId" INTEGER;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "styleConfig" TEXT;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "customCss" TEXT;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "autoReplyEnabled" BOOLEAN DEFAULT 0;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "autoReplySubject" TEXT;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "autoReplyBody" TEXT;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Form" ADD COLUMN "autoReplyCatalogUrl" TEXT;`) } catch {}
+
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "FormSubmission" ADD COLUMN "companyId" INTEGER;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "FormSubmission" ADD COLUMN "websiteId" INTEGER;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "FormSubmission" ADD COLUMN "isSpam" BOOLEAN DEFAULT 0;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "FormSubmission" ADD COLUMN "spamReason" TEXT;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "FormSubmission" ADD COLUMN "status" TEXT DEFAULT 'pending';`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "FormSubmission" ADD COLUMN "notes" TEXT;`) } catch {}
   } catch (err) {
     console.error('Failed to auto-initialize SQLite database tables:', err)
   }
