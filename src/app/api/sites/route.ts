@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, ensureDbInitialized } from '@/lib/prisma'
 import { getAuthUserAndScope } from '@/lib/rbac'
 
 export async function GET(request: Request) {
   try {
+    await ensureDbInitialized()
     const { searchParams } = new URL(request.url)
     const companyId = searchParams.get('companyId')
     const scope = await getAuthUserAndScope(request)
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await ensureDbInitialized()
     const scope = await getAuthUserAndScope(request)
     if (scope && scope.role !== 'super_admin' && scope.role !== 'company_admin') {
       return NextResponse.json({ error: '权限不足，仅超级管理员与公司管理员可注册新站点' }, { status: 403 })
