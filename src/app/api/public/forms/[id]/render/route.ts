@@ -3,7 +3,7 @@ import { prisma, ensureDbInitialized } from '@/lib/prisma'
 import { renderFormHTML, FormField } from '@/lib/form-renderer'
 
 // GET /api/public/forms/[id]/render
-// This is called by WordPress to get form HTML
+// Render public form HTML with marketing tag injections
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await ensureDbInitialized()
@@ -18,6 +18,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const form = await prisma.form.findUnique({
       where: { id: formId, isActive: true },
+      include: {
+        website: true
+      }
     })
 
     if (!form) {
@@ -28,12 +31,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const fields: FormField[] = JSON.parse(form.fields)
-    const host = req.headers.get('host') || '192.168.10.116:3000'
+    const host = req.headers.get('host') || 'ops.dtafac.com'
     const protocol = req.headers.get('x-forwarded-proto') || 'https'
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
     const submitEndpoint = `${appUrl}/api/public/submit`
 
     const isPreview = req.nextUrl.searchParams.get('preview') === '1'
+    const tracking = form.website ? {
+      ga4MeasurementId: form.website.ga4MeasurementId,
+      fbPixelId: form.website.fbPixelId,
+      gtmContainerId: form.website.gtmContainerId,
+      customHeaderScript: form.website.customHeaderScript
+    } : null
+
     const html = renderFormHTML(
       form.id,
       form.name,
@@ -43,7 +53,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       submitEndpoint,
       form.styleConfig,
       form.customCss,
-      isPreview
+      isPreview,
+      tracking
     )
 
     return new NextResponse(html, {

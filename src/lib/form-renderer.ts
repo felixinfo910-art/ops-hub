@@ -25,6 +25,13 @@ export interface FormStyleConfig {
   fontFamily?: string
 }
 
+export interface WebsiteTrackingConfig {
+  ga4MeasurementId?: string | null
+  fbPixelId?: string | null
+  gtmContainerId?: string | null
+  customHeaderScript?: string | null
+}
+
 const themes = {
   default: {
     bg: 'transparent',
@@ -121,7 +128,8 @@ export function renderFormHTML(
   submitEndpoint: string,
   styleConfigRaw?: string | FormStyleConfig | null,
   customCss?: string | null,
-  isPreview: boolean = false
+  isPreview: boolean = false,
+  tracking?: WebsiteTrackingConfig | null
 ): string {
   const baseT = themes[theme] || themes.default
 
@@ -193,7 +201,35 @@ export function renderFormHTML(
 
   const fieldsHtml = fields.map(renderField).join('\n')
 
+  // Generate Tag Injection HTML
+  let trackingHtml = ''
+  if (tracking) {
+    if (tracking.ga4MeasurementId) {
+      trackingHtml += `
+<!-- GA4 Tracking -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=${tracking.ga4MeasurementId}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${tracking.ga4MeasurementId}');</script>`
+    }
+
+    if (tracking.fbPixelId) {
+      trackingHtml += `
+<!-- FB Pixel Tracking -->
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${tracking.fbPixelId}');fbq('track','PageView');</script>`
+    }
+
+    if (tracking.gtmContainerId) {
+      trackingHtml += `
+<!-- GTM Tracking -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${tracking.gtmContainerId}');</script>`
+    }
+
+    if (tracking.customHeaderScript) {
+      trackingHtml += `\n${tracking.customHeaderScript}`
+    }
+  }
+
   return `
+${trackingHtml}
 <style>
 .ops-form-wrap *{box-sizing:border-box;margin:0;padding:0;}
 .ops-form-wrap{font-family:${t.font};background:${t.bg} !important;padding:0;}
@@ -222,6 +258,7 @@ ${customCss || ''}
 <div class="ops-form-wrap" id="ops_wrap_${formId}">
   <form class="ops-form" id="ops_form_${formId}" novalidate>
     <input type="hidden" name="form_id" value="${formId}" />
+    <input type="text" name="_hp_trap" style="display:none !important; position:absolute; left:-9999px; opacity:0; pointer-events:none;" tabindex="-1" autocomplete="off" />
     <input type="hidden" name="page_url" id="ops_page_url_${formId}" value="" />
     <input type="hidden" name="referrer" id="ops_referrer_${formId}" value="" />
     <input type="hidden" name="utm_source" id="ops_utm_source_${formId}" value="" />
@@ -301,7 +338,13 @@ ${customCss || ''}
         msg.textContent = '${successMessage}';
         msg.style.display = 'block';
         formEl.reset();
-        
+
+        // Trigger conversion event for GA4 / FB Pixel
+        try {
+          if (window.gtag) { gtag('event', 'generate_lead', { form_id: ${formId}, form_name: '${formName}' }); }
+          if (window.fbq) { fbq('track', 'Lead', { content_name: '${formName}' }); }
+        } catch(e) {}
+
         var redirectUrl = '${t.redirectUrl}';
         if (redirectUrl) {
           setTimeout(function() {

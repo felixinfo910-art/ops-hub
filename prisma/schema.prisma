@@ -10,36 +10,167 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Form {
-  id             Int              @id @default(autoincrement())
-  name           String
-  description    String?
-  fields         String           // JSON: field configurations
-  notifyEmail    String           // Email to receive submissions
-  styleTheme     String           @default("default") // default | dark | minimal | green
-  styleConfig    String?          // JSON: custom style configuration
-  customCss      String?          // Custom CSS code
-  successMessage String           @default("Thank you! We will contact you soon.")
-  isActive       Boolean          @default(true)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  submissions    FormSubmission[]
+// 1. 公司 / 客户 / 租户模型
+model Company {
+  id                 Int              @id @default(autoincrement())
+  name               String           // 公司/项目名称
+  code               String           @unique // 唯一编号代码
+  status             String           @default("active") // active | suspended
+  smtpConfig         String?          // JSON: 公司层级默认 SMTP 配置
+  defaultNotifyEmail String?          // 公司层级默认通知邮箱
+
+  // Webhook 实时分发 (公司级)
+  feishuWebhook      String?          // 飞书机器人 Webhook URL
+  dingtalkWebhook    String?          // 钉钉机器人 Webhook URL
+  customWebhookUrl   String?          // 自定义 HTTP POST Webhook Endpoint
+
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  users              User[]
+  websites           Website[]
+  forms              Form[]
+  submissions        FormSubmission[]
 }
 
+// 2. 独立站模型
+model Website {
+  id                 Int                      @id @default(autoincrement())
+  companyId          Int                      // 归属公司
+  company            Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  name               String                   // 站点名称 (如: 北美官网)
+  domain             String                   // 主域名 (如: https://site-us.com)
+  siteKey            String                   @unique // 站点 API 识别 Key
+  status             String                   @default("active") // active | paused
+  allowedDomains     String?                  // 域名白名单 (逗号分隔)
+  customSmtpConfig   String?                  // 覆盖公司的 SMTP 配置 (JSON)
+  notifyEmail        String?                  // 覆盖公司的通知邮箱
+
+  // Webhook 实时分发 (站点级覆盖)
+  feishuWebhook      String?                  // 站点专属飞书 Webhook
+  dingtalkWebhook    String?                  // 站点专属钉钉 Webhook
+  customWebhookUrl   String?                  // 站点专属 Webhook Endpoint
+
+  // 防垃圾与安全策略
+  enableHoneypot     Boolean                  @default(true) // 是否开启静默蜜罐 Trap
+  blacklistedIps     String?                  // 站点黑名单 IP (逗号或换行分隔)
+
+  // 域名与 SSL 探针巡检
+  sslExpiresAt       DateTime?                // SSL 证书到期时间
+  domainExpiresAt    DateTime?                // 域名到期时间
+  lastHttpStatus     Int?                     // 最近一次 HTTP 状态码 (200, 502 等)
+  lastResponseTimeMs Int?                     // 最近一次响应延时 (ms)
+  lastCheckedAt      DateTime?                // 最近一次巡检时间
+
+  // 营销 Tag 注入 SDK
+  ga4MeasurementId   String?                  // GA4 追踪 ID (如 G-XXXXXXXXXX)
+  fbPixelId          String?                  // Facebook Pixel ID (如 1234567890)
+  gtmContainerId     String?                  // Google Tag Manager ID (如 GTM-XXXXXXX)
+  customHeaderScript String?                  // 自定义 Header JS/HTML 注入代码
+
+  lastPingAt         DateTime?                // 最近在线/数据提交时间
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  userPermissions    UserWebsitePermission[]
+  forms              Form[]
+  submissions        FormSubmission[]
+}
+
+// 3. 用户账号模型
+model User {
+  id                 Int                      @id @default(autoincrement())
+  email              String                   @unique
+  passwordHash       String
+  name               String?
+  avatar             String?
+  
+  // 角色类型: super_admin | company_admin | site_manager | viewer
+  role               String                   @default("company_admin")
+  
+  // 归属公司 (超级管理员超脱于单一公司，可为 null)
+  companyId          Int?
+  company            Company?                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  // 站点细粒度指派 (针对 site_manager 和 viewer)
+  sitePermissions    UserWebsitePermission[]
+
+  isActive           Boolean                  @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+}
+
+// 4. 用户与特定站点的精细化授权关系表
+model UserWebsitePermission {
+  userId             Int
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  websiteId          Int
+  website            Website                  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@id([userId, websiteId])
+}
+
+// 5. 表单模型
+model Form {
+  id                 Int              @id @default(autoincrement())
+  companyId          Int?             // 所属公司 (可选)
+  company            Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  websiteId          Int?             // 所属独立站 (可选)
+  website            Website?         @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+  
+  name               String
+  description        String?
+  fields             String           // JSON: 字段配置
+  notifyEmail        String           // 接收提交通知邮箱
+  styleTheme         String           @default("default") // default | dark | minimal | green
+  styleConfig        String?          // JSON: 自定义样式配置
+  customCss          String?          // 自定义 CSS 代码
+  successMessage     String           @default("Thank you! We will contact you soon.")
+
+  // 客户自动确认回执配置 (Auto-Responder)
+  autoReplyEnabled   Boolean          @default(false)
+  autoReplySubject   String?          // 自动回执邮件主题
+  autoReplyBody      String?          // 自动回执邮件正文 HTML / Plaintext
+  autoReplyCatalogUrl String?         // 自动回执随附 Product Catalog / PDF 链接
+
+  isActive           Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  submissions        FormSubmission[]
+}
+
+// 6. 询盘提交记录模型
 model FormSubmission {
-  id          Int      @id @default(autoincrement())
-  formId      Int
-  form        Form     @relation(fields: [formId], references: [id])
-  data        String   // JSON: submitted form data
-  ip          String?
-  country     String?
-  city        String?
-  userAgent   String?
-  pageUrl     String?
-  referrer    String?
-  utmSource   String?
-  utmMedium   String?
-  utmCampaign String?
-  utmKeyword  String?
-  createdAt   DateTime @default(now())
+  id                 Int              @id @default(autoincrement())
+  companyId          Int?             // 关联公司 (可选)
+  company            Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  websiteId          Int?             // 关联独立站 (可选)
+  website            Website?         @relation(fields: [websiteId], references: [id], onDelete: SetNull)
+  formId             Int
+  form               Form             @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  data               String           // JSON: 提交数据
+  ip                 String?
+  country            String?
+  city               String?
+  userAgent          String?
+  pageUrl            String?
+  referrer           String?
+  utmSource          String?
+  utmMedium          String?
+  utmCampaign        String?
+  utmKeyword         String?
+
+  // 防垃圾防护标识
+  isSpam             Boolean          @default(false)
+  spamReason         String?          // 判定原因: honeypot_trap | ip_blacklisted | origin_disallowed | rate_limit
+
+  // 询盘跟进状态流转
+  status             String           @default("pending") // pending | contacted | qualified | closed | junk
+  notes              String?          // 内部跟进备注信息
+
+  createdAt          DateTime         @default(now())
 }

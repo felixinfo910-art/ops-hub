@@ -12,6 +12,8 @@ interface ExportSubmission {
   utmCampaign?: string | null
   utmKeyword?: string | null
   form?: { name: string }
+  company?: { name: string }
+  website?: { name: string; domain: string }
 }
 
 export function exportSubmissionsToCSV(submissions: ExportSubmission[], filenamePrefix = 'inquiries') {
@@ -39,6 +41,8 @@ export function exportSubmissionsToCSV(submissions: ExportSubmission[], filename
   const headers = [
     'ID',
     '提交时间',
+    '归属公司',
+    '归属独立站',
     '表单名称',
     ...dataKeys,
     'UTM 渠道',
@@ -64,6 +68,8 @@ export function exportSubmissionsToCSV(submissions: ExportSubmission[], filename
     return [
       s.id,
       escapeCSV(new Date(s.createdAt).toLocaleString('zh-CN')),
+      escapeCSV(s.company?.name || '通用'),
+      escapeCSV(s.website?.name ? `${s.website.name} (${s.website.domain})` : '通用'),
       escapeCSV(s.form?.name || ''),
       ...dataValues,
       escapeCSV(s.utmSource),

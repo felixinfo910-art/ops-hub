@@ -7,7 +7,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const form = await prisma.form.findUnique({
       where: { id: parseInt(id) },
-      include: { _count: { select: { submissions: true } } },
+      include: {
+        company: { select: { id: true, name: true } },
+        website: { select: { id: true, name: true, domain: true } },
+        _count: { select: { submissions: true } }
+      },
     })
     if (!form) return NextResponse.json({ success: false, message: 'Form not found' }, { status: 404 })
     return NextResponse.json({ success: true, data: form })
@@ -21,7 +25,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params
     const body = await req.json()
-    const { name, description, fields, notifyEmail, styleTheme, styleConfig, customCss, successMessage, isActive } = body
+    const {
+      name,
+      description,
+      fields,
+      notifyEmail,
+      styleTheme,
+      styleConfig,
+      customCss,
+      successMessage,
+      isActive,
+      companyId,
+      websiteId,
+      autoReplyEnabled,
+      autoReplySubject,
+      autoReplyBody,
+      autoReplyCatalogUrl
+    } = body
 
     const form = await prisma.form.update({
       where: { id: parseInt(id) },
@@ -35,6 +55,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(customCss !== undefined && { customCss }),
         ...(successMessage !== undefined && { successMessage }),
         ...(isActive !== undefined && { isActive }),
+        ...(companyId !== undefined && { companyId: companyId ? parseInt(companyId, 10) : null }),
+        ...(websiteId !== undefined && { websiteId: websiteId ? parseInt(websiteId, 10) : null }),
+        ...(autoReplyEnabled !== undefined && { autoReplyEnabled: Boolean(autoReplyEnabled) }),
+        ...(autoReplySubject !== undefined && { autoReplySubject }),
+        ...(autoReplyBody !== undefined && { autoReplyBody }),
+        ...(autoReplyCatalogUrl !== undefined && { autoReplyCatalogUrl }),
       },
     })
     return NextResponse.json({ success: true, data: form })

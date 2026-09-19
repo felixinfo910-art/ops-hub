@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { exportSubmissionsToCSV } from '@/lib/csv'
 
 interface SubmissionItem {
@@ -15,18 +16,43 @@ interface SubmissionItem {
   utmMedium: string | null
   utmCampaign: string | null
   utmKeyword: string | null
+  isSpam: boolean
+  spamReason: string | null
+  status: string
+  notes?: string | null
   createdAt: string
   form: { id: number; name: string }
+  company?: { id: number; name: string }
+  website?: { id: number; name: string; domain: string }
 }
 
-export default function SubmissionsPage() {
+const STATUS_LABELS: Record<string, { label: string; badge: string }> = {
+  pending: { label: '⏳ 待跟进', badge: 'badge-yellow' },
+  contacted: { label: '💬 已联系', badge: 'badge-blue' },
+  qualified: { label: '🎯 有效意向', badge: 'badge-green' },
+  closed: { label: '🎉 已成交', badge: 'badge-purple' },
+  junk: { label: '❌ 无效/放弃', badge: 'badge-red' },
+}
+
+function SubmissionsContent() {
+  const searchParams = useSearchParams()
+  const companyIdFilter = searchParams.get('companyId')
+  const websiteIdFilter = searchParams.get('websiteId')
+
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [spamFilter, setSpamFilter] = useState<'all' | 'valid' | 'spam'>('valid')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const fetchSubmissions = () => {
     setLoading(true)
-    fetch('/api/submissions')
+    const params = new URLSearchParams()
+    if (companyIdFilter) params.set('companyId', companyIdFilter)
+    if (websiteIdFilter) params.set('websiteId', websiteIdFilter)
+
+    const query = params.toString() ? `?${params.toString()}` : ''
+    fetch(`/api/submissions${query}`)
       .then(r => r.json())
       .then(res => {
         if (res.success) setSubmissions(res.data)
@@ -36,7 +62,23 @@ export default function SubmissionsPage() {
 
   useEffect(() => {
     fetchSubmissions()
-  }, [])
+  }, [companyIdFilter, websiteIdFilter])
+
+  const handleUpdateStatus = async (id: number, newStatus: string) => {
+    try {
+      const res = await fetch(`/api/submissions/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSubmissions(submissions.map(s => s.id === id ? { ...s, status: newStatus } : s))
+      }
+    } catch {
+      alert('更新状态失败')
+    }
+  }
 
   const handleDelete = async (id: number) => {
     if (!confirm('确定删除此条询盘记录？此操作无法撤销。')) return
@@ -56,117 +98,206 @@ export default function SubmissionsPage() {
     }
   }
 
+  const filteredSubmissions = submissions.filter(s => {
+    if (spamFilter === 'valid' && s.isSpam) return false
+    if (spamFilter === 'spam' && !s.isSpam) return false
+    if (statusFilter !== 'all' && s.status !== statusFilter) return false
+    return true
+  })
+
   return (
-    <>
-      <div className="header">
-        <div className="header-title">询盘记录</div>
-        <div className="header-actions">
-          {submissions.length > 0 && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => exportSubmissionsToCSV(submissions, 'all_inquiries')}
-            >
-              📥 导出 CSV
-            </button>
-          )}
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <div className="page-title">📥 询盘 CRM 跟进与渠道归因</div>
+          <div className="page-subtitle">共 {submissions.length} 条询盘记录，支持流转跟进状态、自定义标注与隔离导出</div>
+        </div>
+        {filteredSubmissions.length > 0 && (
+          <button
+            className="btn btn-secondary"
+            onClick={() => exportSubmissionsToCSV(filteredSubmissions, 'all_inquiries')}
+          >
+            📥 导出筛选结果 CSV
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className={`btn ${spamFilter === 'valid' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setSpamFilter('valid')}
+          >
+            ✅ 有效询盘 ({submissions.filter(s => !s.isSpam).length})
+          </button>
+          <button
+            className={`btn ${spamFilter === 'spam' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setSpamFilter('spam')}
+          >
+            🚫 拦截的垃圾询盘 ({submissions.filter(s => s.isSpam).length})
+          </button>
+          <button
+            className={`btn ${spamFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setSpamFilter('all')}
+          >
+            📋 全部记录 ({submissions.length})
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>跟进状态:</span>
+          <select
+            className="form-input form-select"
+            style={{ width: 'auto', padding: '6px 12px', fontSize: 13 }}
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            <option value="all">全部状态</option>
+            <option value="pending">⏳ 待跟进</option>
+            <option value="contacted">💬 已联系</option>
+            <option value="qualified">🎯 有效意向</option>
+            <option value="closed">🎉 已成交</option>
+            <option value="junk">❌ 无效/放弃</option>
+          </select>
         </div>
       </div>
-      <div className="page">
-        <div className="page-header">
-          <div>
-            <div className="page-title">询盘记录</div>
-            <div className="page-subtitle">所有表单的提交记录，共 {submissions.length} 条</div>
+
+      <div className="card">
+        {loading ? (
+          <div style={{ padding: 40, textAlign: 'center' }}>
+            <div className="loading-spinner" style={{ margin: '0 auto 12px' }} />
+            <div style={{ color: 'var(--text-muted)' }}>加载询盘记录中...</div>
           </div>
-        </div>
+        ) : filteredSubmissions.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <div className="empty-title">暂无匹配的询盘记录</div>
+            <div className="empty-desc">尝试切换顶部的类型或状态筛选</div>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>安全防护</th>
+                  <th>跟进状态 (CRM)</th>
+                  <th>时间</th>
+                  <th>归属公司/站点</th>
+                  <th>来源表单</th>
+                  <th>提交数据</th>
+                  <th>UTM 广告归因</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSubmissions.map(s => {
+                  let data: Record<string, string> = {}
+                  try {
+                    data = JSON.parse(s.data)
+                  } catch {}
 
-        <div className="card">
-          {loading ? (
-            <div style={{ padding: 40, textAlign: 'center' }}>
-              <div className="loading-spinner" style={{ margin: '0 auto' }} />
-            </div>
-          ) : submissions.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📭</div>
-              <div className="empty-title">暂无询盘记录</div>
-              <div className="empty-desc">创建表单并嵌入网站后，客户提交的询盘会显示在这里</div>
-              <Link href="/forms/new" className="btn btn-primary">创建第一个表单</Link>
-            </div>
-          ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>时间</th>
-                    <th>来源表单</th>
-                    <th>提交数据</th>
-                    <th>来源渠道</th>
-                    <th>IP / 地区</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {submissions.map(s => {
-                    let data: Record<string, string> = {}
-                    try {
-                      data = JSON.parse(s.data)
-                    } catch {}
+                  const displayFields = Object.entries(data)
+                    .filter(([k]) => !['form_id', 'page_url', 'referrer', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_keyword', '_hp_trap'].includes(k))
 
-                    const displayFields = Object.entries(data)
-                      .filter(([k]) => !['form_id', 'page_url', 'referrer', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_keyword'].includes(k))
+                  const statusObj = STATUS_LABELS[s.status || 'pending'] || STATUS_LABELS.pending
 
-                    return (
-                      <tr key={s.id}>
-                        <td style={{ whiteSpace: 'nowrap', fontSize: 13, color: 'var(--text-muted)', minWidth: 120 }}>
-                          {new Date(s.createdAt).toLocaleString('zh-CN')}
-                        </td>
-                        <td>
-                          <Link href={`/forms/${s.form.id}?tab=submissions`}>
-                            <span className="badge badge-blue">#{s.form.id} {s.form.name}</span>
-                          </Link>
-                        </td>
-                        <td>
-                          {displayFields.map(([k, v]) => (
-                            <div key={k} style={{ fontSize: 13, marginBottom: 2 }}>
-                              <span style={{ color: 'var(--text-muted)' }}>{k}:</span>{' '}
-                              <span style={{ fontWeight: 500 }}>{String(v)}</span>
-                            </div>
-                          ))}
-                        </td>
-                        <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                          {s.utmSource && <div>渠道: {s.utmSource}</div>}
-                          {s.utmKeyword && <div>词: {s.utmKeyword}</div>}
-                          {s.pageUrl && (
-                            <div style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              <a href={s.pageUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
-                                {s.pageUrl}
-                              </a>
-                            </div>
-                          )}
-                        </td>
-                        <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                          <div>{s.ip || '-'}</div>
-                          {(s.city || s.country) && (
-                            <div style={{ fontSize: 12 }}>{[s.city, s.country].filter(Boolean).join(' ')}</div>
-                          )}
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            disabled={deletingId === s.id}
-                            onClick={() => handleDelete(s.id)}
-                          >
-                            {deletingId === s.id ? '删除中...' : '删除'}
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                  return (
+                    <tr key={s.id}>
+                      <td>
+                        {s.isSpam ? (
+                          <span className="badge badge-red" title={s.spamReason || 'Spam'}>
+                            🚫 垃圾 [{s.spamReason}]
+                          </span>
+                        ) : (
+                          <span className="badge badge-green">有效询盘</span>
+                        )}
+                      </td>
+                      <td>
+                        <select
+                          className={`form-input form-select ${statusObj.badge}`}
+                          style={{ border: 'none', fontWeight: 600, fontSize: 12, padding: '4px 8px', width: 'auto', cursor: 'pointer' }}
+                          value={s.status || 'pending'}
+                          onChange={e => handleUpdateStatus(s.id, e.target.value)}
+                        >
+                          <option value="pending">⏳ 待跟进</option>
+                          <option value="contacted">💬 已联系</option>
+                          <option value="qualified">🎯 有效意向</option>
+                          <option value="closed">🎉 已成交</option>
+                          <option value="junk">❌ 无效/放弃</option>
+                        </select>
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap', fontSize: 12, color: 'var(--text-muted)' }}>
+                        {new Date(s.createdAt).toLocaleString('zh-CN')}
+                      </td>
+                      <td>
+                        {s.company && (
+                          <div style={{ marginBottom: 4 }}>
+                            <span className="badge badge-blue">{s.company.name}</span>
+                          </div>
+                        )}
+                        {s.website ? (
+                          <span className="badge badge-yellow">{s.website.name}</span>
+                        ) : (
+                          <span style={{ color: 'var(--text-subtle)', fontSize: 11 }}>通用站点</span>
+                        )}
+                      </td>
+                      <td>
+                        <Link href={`/forms/${s.form.id}?tab=submissions`}>
+                          <span className="badge badge-blue">#{s.form.id} {s.form.name}</span>
+                        </Link>
+                      </td>
+                      <td>
+                        {displayFields.map(([k, v]) => (
+                          <div key={k} style={{ fontSize: 13, marginBottom: 2 }}>
+                            <span style={{ color: 'var(--text-muted)' }}>{k}:</span>{' '}
+                            <span style={{ fontWeight: 500 }}>{String(v)}</span>
+                          </div>
+                        ))}
+                      </td>
+                      <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        {s.utmSource ? (
+                          <div><strong style={{ color: 'var(--primary)' }}>渠道:</strong> {s.utmSource}</div>
+                        ) : (
+                          <div style={{ color: 'var(--text-subtle)' }}>直接访问 (Direct)</div>
+                        )}
+                        {s.utmKeyword && <div><strong style={{ color: 'var(--success)' }}>关键词:</strong> {s.utmKeyword}</div>}
+                        {s.pageUrl && (
+                          <div style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <a href={s.pageUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
+                              {s.pageUrl}
+                            </a>
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          disabled={deletingId === s.id}
+                          onClick={() => handleDelete(s.id)}
+                        >
+                          {deletingId === s.id ? '删除中...' : '删除'}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </>
+    </div>
+  )
+}
+
+export default function SubmissionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="page">
+        <div className="loading-spinner" style={{ margin: '40px auto' }} />
+      </div>
+    }>
+      <SubmissionsContent />
+    </Suspense>
   )
 }
