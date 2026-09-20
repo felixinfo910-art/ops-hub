@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, ensureDbInitialized } from '@/lib/prisma'
 import { AUTH_COOKIE_NAME, serializeSessionPayload, hashPassword, getAdminUsername, getAdminPassword, createSessionToken } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
+    await ensureDbInitialized()
     const body = await request.json()
     const { username, password } = body
 

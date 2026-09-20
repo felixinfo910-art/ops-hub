@@ -28,9 +28,15 @@ export default function Sidebar() {
       .then(data => {
         if (data.authenticated) {
           setCurrentUser(data.user)
+        } else if (pathname !== '/login') {
+          router.push('/login')
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (pathname !== '/login') {
+          router.push('/login')
+        }
+      })
   }, [pathname])
 
   if (pathname === '/login') {

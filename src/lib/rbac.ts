@@ -1,5 +1,5 @@
 import { parseSessionPayload, AUTH_COOKIE_NAME } from './auth'
-import { prisma } from './prisma'
+import { prisma, ensureDbInitialized } from './prisma'
 
 export interface UserScope {
   userId: number
@@ -88,6 +88,8 @@ export function computeUserMenus(role: string, allowedMenusJson?: string | null)
 }
 
 export async function getAuthUserAndScope(req: Request): Promise<UserScope | null> {
+  await ensureDbInitialized()
+
   const cookieHeader = req.headers.get('cookie') || ''
   const cookies = Object.fromEntries(
     cookieHeader.split(';').map(c => {
