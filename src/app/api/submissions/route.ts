@@ -10,15 +10,30 @@ export async function GET(req: NextRequest) {
     const websiteId = searchParams.get('websiteId')
     const scope = await getAuthUserAndScope(req)
 
-    const where: any = {}
-    if (companyId) where.companyId = parseInt(companyId, 10)
-    if (websiteId) where.websiteId = parseInt(websiteId, 10)
+    if (!scope) {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+    }
 
-    if (scope) {
-      if (scope.role === 'company_admin' && scope.companyId) {
-        where.companyId = scope.companyId
-      } else if (scope.allowedWebsiteIds !== null) {
-        where.websiteId = { in: scope.allowedWebsiteIds }
+    const where: any = {}
+    
+    // Strict RBAC Data Override Layer
+    if (scope.role === 'super_admin') {
+      if (companyId) where.companyId = parseInt(companyId, 10)
+      if (websiteId) where.websiteId = parseInt(websiteId, 10)
+    } else if (scope.allowedWebsiteIds === null) {
+      if (scope.companyId) where.companyId = scope.companyId
+      if (websiteId) where.websiteId = parseInt(websiteId, 10)
+    } else {
+      const allowed = scope.allowedWebsiteIds || []
+      where.websiteId = { in: allowed }
+
+      if (websiteId) {
+        const reqId = parseInt(websiteId, 10)
+        if (allowed.includes(reqId)) {
+          where.websiteId = reqId
+        } else {
+          return NextResponse.json({ success: false, message: 'Forbidden: Cannot access this data' }, { status: 403 })
+        }
       }
     }
 

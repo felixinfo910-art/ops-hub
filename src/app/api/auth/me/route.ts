@@ -1,37 +1,26 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
-import { AUTH_COOKIE_NAME, parseSessionPayload, getAdminUsername, getExpectedToken } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { AUTH_COOKIE_NAME, parseSessionPayload } from '@/lib/auth'
+import { getAuthUserAndScope } from '@/lib/rbac'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)
-    const token = sessionCookie?.value
+    const scope = await getAuthUserAndScope(request)
+    if (scope) {
+      const cookieStore = await cookies()
+      const sessionCookie = cookieStore.get(AUTH_COOKIE_NAME)
+      const payload = parseSessionPayload(sessionCookie?.value)
 
-    if (!token) {
-      return NextResponse.json({ authenticated: false }, { status: 401 })
-    }
-
-    const payload = parseSessionPayload(token)
-    if (payload) {
-      return NextResponse.json({
-        authenticated: true,
-        user: payload
-      })
-    }
-
-    // Check legacy token
-    const legacyToken = await getExpectedToken()
-    if (token === legacyToken) {
       return NextResponse.json({
         authenticated: true,
         user: {
-          userId: 0,
-          email: 'admin@opshub.com',
-          name: 'Super Admin',
-          role: 'super_admin',
-          companyId: null
+          userId: scope.userId,
+          role: scope.role,
+          rawRole: scope.rawRole,
+          companyId: scope.companyId,
+          allowedMenus: scope.allowedMenus,
+          email: payload?.email || 'admin@opshub.com',
+          name: payload?.name || payload?.email || '管理员'
         }
       })
     }

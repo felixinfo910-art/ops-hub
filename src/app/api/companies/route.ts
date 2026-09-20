@@ -36,8 +36,8 @@ export async function POST(request: Request) {
   try {
     await ensureDbInitialized()
     const scope = await getAuthUserAndScope(request)
-    if (scope && scope.role !== 'super_admin' && scope.role !== 'company_admin') {
-      return NextResponse.json({ error: '权限不足，无法创建公司' }, { status: 403 })
+    if (scope && !scope.allowedMenus.includes('companies') && scope.role !== 'super_admin') {
+      return NextResponse.json({ error: '权限不足，无权操作公司管理' }, { status: 403 })
     }
 
     const body = await request.json()

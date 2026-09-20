@@ -16,9 +16,13 @@ export async function GET(request: Request) {
     }
 
     if (scope) {
-      if (scope.role === 'company_admin' && scope.companyId) {
+      if (scope.role === 'super_admin') {
+        // Super admin sees all, or filters by provided companyId
+      } else if (scope.allowedWebsiteIds === null) {
+        // Null means unrestricted within their company
         where.companyId = scope.companyId
-      } else if (scope.allowedWebsiteIds !== null) {
+      } else {
+        // Has explicit restricted subset of websites
         where.id = { in: scope.allowedWebsiteIds }
       }
     }
@@ -48,8 +52,8 @@ export async function POST(request: Request) {
   try {
     await ensureDbInitialized()
     const scope = await getAuthUserAndScope(request)
-    if (scope && scope.role !== 'super_admin' && scope.role !== 'company_admin') {
-      return NextResponse.json({ error: '权限不足，仅超级管理员与公司管理员可注册新站点' }, { status: 403 })
+    if (scope && !scope.allowedMenus.includes('sites') && scope.role !== 'super_admin' && scope.role !== 'company_admin') {
+      return NextResponse.json({ error: '权限不足，无权操作站点管理' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -57,6 +61,7 @@ export async function POST(request: Request) {
       companyId,
       name,
       domain,
+      adminUrl,
       allowedDomains,
       notifyEmail,
       feishuWebhook,
@@ -92,6 +97,7 @@ export async function POST(request: Request) {
         companyId: parseInt(companyId, 10),
         name: name.trim(),
         domain: domain.trim(),
+        adminUrl: adminUrl ? adminUrl.trim() : null,
         siteKey,
         allowedDomains: allowedDomains ? allowedDomains.trim() : null,
         notifyEmail: notifyEmail ? notifyEmail.trim() : null,

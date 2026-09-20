@@ -12,6 +12,7 @@ interface Website {
   companyId: number
   name: string
   domain: string
+  adminUrl?: string | null
   siteKey: string
   status: string
   allowedDomains?: string
@@ -53,6 +54,7 @@ function SitesContent() {
   const [companyId, setCompanyId] = useState('')
   const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
+  const [adminUrl, setAdminUrl] = useState('')
   const [allowedDomains, setAllowedDomains] = useState('')
   const [notifyEmail, setNotifyEmail] = useState('')
   const [enableHoneypot, setEnableHoneypot] = useState(true)
@@ -108,6 +110,7 @@ function SitesContent() {
     setEditingSite(null)
     setName('')
     setDomain('')
+    setAdminUrl('')
     setAllowedDomains('')
     setNotifyEmail('')
     setEnableHoneypot(true)
@@ -127,6 +130,7 @@ function SitesContent() {
     setCompanyId(w.companyId.toString())
     setName(w.name)
     setDomain(w.domain)
+    setAdminUrl(w.adminUrl || '')
     setAllowedDomains(w.allowedDomains || '')
     setNotifyEmail(w.notifyEmail || '')
     setEnableHoneypot(w.enableHoneypot !== false)
@@ -152,6 +156,7 @@ function SitesContent() {
         companyId: parseInt(companyId, 10),
         name: name.trim(),
         domain: domain.trim(),
+        adminUrl: adminUrl.trim() || undefined,
         allowedDomains: allowedDomains.trim() || undefined,
         notifyEmail: notifyEmail.trim() || undefined,
         enableHoneypot,
@@ -285,12 +290,46 @@ function SitesContent() {
                         <span className="badge badge-blue">{w.company?.name || '通用'}</span>
                       </td>
                       <td>
-                        <div style={{ marginBottom: 4 }}>
-                          <a href={w.domain.startsWith('http') ? w.domain : `https://${w.domain}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', fontWeight: 500 }}>
-                            {w.domain} 🔗
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 4 }}>
+                          <a
+                            href={w.domain.startsWith('http') ? w.domain : `https://${w.domain}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-secondary btn-sm"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', fontSize: 12, textDecoration: 'none', width: 'fit-content' }}
+                          >
+                            🌐 前台: {w.domain.replace(/^https?:\/\//, '')} 🔗
                           </a>
+                          {(() => {
+                            const defaultBase = w.domain.startsWith('http') ? w.domain : `https://${w.domain}`
+                            const rawAdmin = w.adminUrl?.trim() || `${defaultBase.replace(/\/$/, '')}/wp-admin`
+                            const targetAdmin = rawAdmin.startsWith('http') ? rawAdmin : `https://${rawAdmin}`
+                            return (
+                              <a
+                                href={targetAdmin}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                  padding: '3px 8px',
+                                  fontSize: 12,
+                                  color: 'var(--primary)',
+                                  background: 'var(--primary-light)',
+                                  borderColor: 'var(--primary)',
+                                  fontWeight: 600,
+                                  textDecoration: 'none',
+                                  width: 'fit-content'
+                                }}
+                              >
+                                ⚙️ 网站后台 ↗
+                              </a>
+                            )
+                          })()}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                           {w.lastHttpStatus === 200 ? (
                             <span className="badge badge-green">200 OK ({w.lastResponseTimeMs || 0}ms)</span>
                           ) : w.lastHttpStatus ? (
@@ -404,16 +443,30 @@ function SitesContent() {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">主域名 *</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="https://site-us.com"
-                    value={domain}
-                    onChange={e => setDomain(e.target.value)}
-                    required
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">网站前台地址 (主域名) *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="https://site-us.com"
+                      value={domain}
+                      onChange={e => setDomain(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">网站后台管理地址 (可选)</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="https://site-us.com/wp-admin"
+                      value={adminUrl}
+                      onChange={e => setAdminUrl(e.target.value)}
+                    />
+                    <div className="form-hint">留空默认使用域名加 /wp-admin</div>
+                  </div>
                 </div>
 
                 {/* Marketing Tag Injection Section */}

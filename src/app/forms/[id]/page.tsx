@@ -11,7 +11,11 @@ export default async function FormDetailPage({ params }: { params: Promise<{ id:
 
   const form = await prisma.form.findUnique({
     where: { id: formId },
-    include: { _count: { select: { submissions: true } } },
+    include: { 
+      company: { select: { id: true, name: true } },
+      website: { select: { id: true, name: true, domain: true } },
+      _count: { select: { submissions: true } }
+    },
   })
 
   if (!form) notFound()

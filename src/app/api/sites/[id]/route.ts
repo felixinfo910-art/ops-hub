@@ -13,6 +13,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const {
       name,
       domain,
+      adminUrl,
       allowedDomains,
       notifyEmail,
       feishuWebhook,
@@ -31,6 +32,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       data: {
         name: name ? name.trim() : undefined,
         domain: domain ? domain.trim() : undefined,
+        adminUrl: adminUrl !== undefined ? (adminUrl ? adminUrl.trim() : null) : undefined,
         allowedDomains: allowedDomains !== undefined ? (allowedDomains ? allowedDomains.trim() : null) : undefined,
         notifyEmail: notifyEmail !== undefined ? (notifyEmail ? notifyEmail.trim() : null) : undefined,
         feishuWebhook: feishuWebhook !== undefined ? (feishuWebhook ? feishuWebhook.trim() : null) : undefined,

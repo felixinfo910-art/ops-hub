@@ -4,7 +4,7 @@ export interface SessionPayload {
   userId: number
   email: string
   name: string
-  role: 'super_admin' | 'company_admin' | 'site_manager' | 'viewer'
+  role: 'super_admin' | 'company_admin' | 'site_manager' | 'viewer' | string
   companyId: number | null
   companyName?: string | null
 }

@@ -40,6 +40,7 @@ export async function ensureDbInitialized() {
         "companyId" INTEGER NOT NULL,
         "name" TEXT NOT NULL,
         "domain" TEXT NOT NULL,
+        "adminUrl" TEXT,
         "siteKey" TEXT NOT NULL UNIQUE,
         "status" TEXT NOT NULL DEFAULT 'active',
         "allowedDomains" TEXT,
@@ -89,9 +90,27 @@ export async function ensureDbInitialized() {
       CREATE TABLE IF NOT EXISTS "UserWebsitePermission" (
         "userId" INTEGER NOT NULL,
         "websiteId" INTEGER NOT NULL,
+        "canCreate" BOOLEAN NOT NULL DEFAULT 1,
+        "canRead" BOOLEAN NOT NULL DEFAULT 1,
+        "canUpdate" BOOLEAN NOT NULL DEFAULT 1,
+        "canDelete" BOOLEAN NOT NULL DEFAULT 0,
         PRIMARY KEY ("userId", "websiteId"),
         FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE,
         FOREIGN KEY ("websiteId") REFERENCES "Website" ("id") ON DELETE CASCADE
+      );
+    `)
+
+    // ---------- PermissionGroup ----------
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "PermissionGroup" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "description" TEXT,
+        "companyId" INTEGER,
+        "allowedMenus" TEXT NOT NULL DEFAULT '[]',
+        "defaultCrud" TEXT DEFAULT '{"canCreate":true,"canRead":true,"canUpdate":true,"canDelete":false}',
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `)
 
@@ -174,6 +193,7 @@ export async function ensureDbInitialized() {
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Company" ADD COLUMN "dingtalkWebhook" TEXT;`) } catch {}
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Company" ADD COLUMN "customWebhookUrl" TEXT;`) } catch {}
     // Website patches
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "adminUrl" TEXT;`) } catch {}
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "feishuWebhook" TEXT;`) } catch {}
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "dingtalkWebhook" TEXT;`) } catch {}
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "customWebhookUrl" TEXT;`) } catch {}
@@ -189,6 +209,35 @@ export async function ensureDbInitialized() {
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "fbPixelId" TEXT;`) } catch {}
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "gtmContainerId" TEXT;`) } catch {}
     try { await prisma.$executeRawUnsafe(`ALTER TABLE "Website" ADD COLUMN "customHeaderScript" TEXT;`) } catch {}
+    // User patches
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN "allowedMenus" TEXT DEFAULT '[]';`) } catch {}
+    // UserWebsitePermission patches
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "UserWebsitePermission" ADD COLUMN "canCreate" BOOLEAN DEFAULT 1;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "UserWebsitePermission" ADD COLUMN "canRead" BOOLEAN DEFAULT 1;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "UserWebsitePermission" ADD COLUMN "canUpdate" BOOLEAN DEFAULT 1;`) } catch {}
+    try { await prisma.$executeRawUnsafe(`ALTER TABLE "UserWebsitePermission" ADD COLUMN "canDelete" BOOLEAN DEFAULT 0;`) } catch {}
+
+    // --- Create Default Super Admin (if missing) to prevent 500/Lockout on new environments ---
+    try {
+      const userCount = await prisma.user.count()
+      if (userCount === 0) {
+        // Pre-computed hash logic to inject the default account without cyclic dependencies
+        // This relies on auth.ts hashPassword('admin123456') logic
+        const { hashPassword } = await import('./auth')
+        const adminHash = await hashPassword('admin123456')
+        await prisma.user.create({
+          data: {
+            email: 'admin@dtafac.com',
+            passwordHash: adminHash,
+            name: 'Super Admin',
+            role: 'super_admin'
+          }
+        })
+        console.log('✅ Created default super_admin account: admin@dtafac.com / admin123456')
+      }
+    } catch (createErr) {
+      console.error('⚠️ Could not initialize default admin account:', createErr)
+    }
 
   } catch (err) {
     console.error('Failed to auto-initialize SQLite database tables:', err)

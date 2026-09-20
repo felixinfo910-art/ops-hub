@@ -14,9 +14,41 @@ export default async function FormsPage({
 
   let forms: any[] = []
   try {
+    const { getAuthUserAndScope } = await import('@/lib/rbac')
+    const { headers } = await import('next/headers')
+    // We mock a Request object to recycle getAuthUserAndScope
+    const reqHeaders = await headers()
+    
+    // Convert ReadonlyHeaders back into a regular string map for the fake request inside next.js RSC
+    const h = new Headers()
+    reqHeaders.forEach((val, key) => h.set(key, val))
+    const fakeReq = { headers: h } as unknown as Request
+    const scope = await getAuthUserAndScope(fakeReq)
+
+    const hostname = reqHeaders.get('host') || ''
+    const isToolsPortal = hostname.includes('tools.') || hostname.includes('toold.')
+
+    if (!scope) {
+      throw new Error('Unauthorized')
+    }
+
     const where: any = {}
-    if (companyId) where.companyId = companyId
-    if (websiteId) where.websiteId = websiteId
+    
+    if (scope.role === 'super_admin') {
+      if (companyId) where.companyId = companyId
+      if (websiteId) where.websiteId = websiteId
+    } else if (scope.allowedWebsiteIds === null) {
+      if (scope.companyId) where.companyId = scope.companyId
+      if (websiteId) where.websiteId = websiteId
+    } else {
+      const allowed = scope.allowedWebsiteIds || []
+      where.websiteId = { in: allowed }
+      if (websiteId && allowed.includes(websiteId)) {
+        where.websiteId = websiteId
+      } else if (websiteId) {
+        throw new Error('Forbidden')
+      }
+    }
 
     forms = await prisma.form.findMany({
       where,

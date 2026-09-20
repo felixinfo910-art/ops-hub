@@ -35,6 +35,10 @@ interface FormDetailClientProps {
     autoReplyBody?: string | null
     autoReplyCatalogUrl?: string | null
     createdAt: Date | string
+    companyId: number | null
+    websiteId: number | null
+    company?: { id: number; name: string } | null
+    website?: { id: number; name: string; domain: string } | null
     _count: { submissions: number }
   }
 }
@@ -92,7 +96,12 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
         return {}
       }
     })(),
+    companyId: initialForm.companyId ? initialForm.companyId.toString() : '',
+    websiteId: initialForm.websiteId ? initialForm.websiteId.toString() : '',
   })
+
+  const [companies, setCompanies] = useState<{id: number, name: string}[]>([])
+  const [websites, setWebsites] = useState<{id: number, name: string, domain: string, companyId: number}[]>([])
 
   const [editingField, setEditingField] = useState<FormField | null>(null)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
@@ -102,6 +111,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
 
   useEffect(() => {
+    // Fetch submissions if tab is active
     if (activeTab === 'submissions') {
       setSubmissionsLoading(true)
       fetch(`/api/forms/${initialForm.id}/submissions`)
@@ -110,6 +120,17 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
         .catch(err => console.error('Fetch submissions error:', err))
         .finally(() => setSubmissionsLoading(false))
     }
+
+    // Fetch companies and sites for the dropdowns
+    fetch('/api/companies')
+      .then(res => res.json())
+      .then(data => { if (data.success) setCompanies(data.companies) })
+      .catch(() => {})
+
+    fetch('/api/sites')
+      .then(res => res.json())
+      .then(data => { if (data.success) setWebsites(data.websites) })
+      .catch(() => {})
   }, [activeTab, initialForm.id])
 
   const handleSave = async () => {
@@ -122,6 +143,8 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          companyId: form.companyId ? parseInt(form.companyId, 10) : null,
+          websiteId: form.websiteId ? parseInt(form.websiteId, 10) : null,
           fields,
           styleConfig: JSON.stringify(form.styleConfig),
         }),
@@ -301,6 +324,37 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                 <label className="form-label">表单名称</label>
                 <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
+              
+              <div className="form-group">
+                <label className="form-label">归属公司 (可选)</label>
+                <select
+                  className="form-input form-select"
+                  value={form.companyId}
+                  onChange={e => {
+                    setForm({ ...form, companyId: e.target.value, websiteId: '' })
+                  }}
+                >
+                  <option value="">全部/通用公司</option>
+                  {companies.map(c => (
+                    <option key={c.id} value={c.id.toString()}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">归属独立站 (可选)</label>
+                <select
+                  className="form-input form-select"
+                  value={form.websiteId}
+                  onChange={e => setForm({ ...form, websiteId: e.target.value })}
+                >
+                  <option value="">全站/通用站点</option>
+                  {(form.companyId ? websites.filter(w => w.companyId === parseInt(form.companyId, 10)) : websites).map(w => (
+                    <option key={w.id} value={w.id.toString()}>{w.name} ({w.domain})</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">描述</label>
                 <input className="form-input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />

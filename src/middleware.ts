@@ -27,22 +27,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Parse session payload for RBAC path protection
-  const payload = parseSessionPayload(sessionCookie.value)
-  if (payload) {
-    // Only super_admin or company_admin can access /companies
-    if (pathname.startsWith('/companies') && payload.role !== 'super_admin' && payload.role !== 'company_admin') {
-      const homeUrl = new URL('/', request.url)
-      return NextResponse.redirect(homeUrl)
-    }
-
-    // Only super_admin or company_admin can manage users at /users
-    if (pathname.startsWith('/users') && payload.role !== 'super_admin' && payload.role !== 'company_admin') {
-      const homeUrl = new URL('/', request.url)
-      return NextResponse.redirect(homeUrl)
-    }
-  }
-
+  // Route protection is handled by APIs and Client UI checking allowedMenus dynamically
+  // Middleware only ensures the user is logged in
   return NextResponse.next()
 }
 

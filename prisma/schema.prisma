@@ -40,7 +40,8 @@ model Website {
   company            Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   
   name               String                   // 站点名称 (如: 北美官网)
-  domain             String                   // 主域名 (如: https://site-us.com)
+  domain             String                   // 主域名/前台地址 (如: https://site-us.com)
+  adminUrl           String?                  // 后台登录地址 (如: https://site-us.com/wp-admin)
   siteKey            String                   @unique // 站点 API 识别 Key
   status             String                   @default("active") // active | paused
   allowedDomains     String?                  // 域名白名单 (逗号分隔)
@@ -96,20 +97,40 @@ model User {
   // 站点细粒度指派 (针对 site_manager 和 viewer)
   sitePermissions    UserWebsitePermission[]
 
+  // 菜单与功能入口控制标识 JSON 文本 (如 ["submissions"]，若为 null 或 "[]" 则降级使用角色默认菜单)
+  allowedMenus       String?                  @default("[]")
+
   isActive           Boolean                  @default(true)
   lastLoginAt        DateTime?
   createdAt          DateTime                 @default(now())
   updatedAt          DateTime                 @updatedAt
 }
 
-// 4. 用户与特定站点的精细化授权关系表
 model UserWebsitePermission {
   userId             Int
   user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   websiteId          Int
   website            Website                  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
 
+  canCreate          Boolean                  @default(true)  // 增 (允许新增)
+  canRead            Boolean                  @default(true)  // 查 (允许查看)
+  canUpdate          Boolean                  @default(true)  // 改 (允许修改)
+  canDelete          Boolean                  @default(false) // 删 (允许删除)
+
   @@id([userId, websiteId])
+}
+
+// 4. 自定义角色与权限分组套件
+model PermissionGroup {
+  id                 Int                      @id @default(autoincrement())
+  name               String                   // 权限套件名称 (如: "外包客服", "SEO审计员")
+  description        String?                  // 职责/权限说明
+  companyId          Int?                     // 归属公司 (null 代表全平台通用)
+  allowedMenus       String                   @default("[]") // JSON: 允许访问的菜单标识列表
+  defaultCrud        String?                  @default("{\"canCreate\":true,\"canRead\":true,\"canUpdate\":true,\"canDelete\":false}")
+
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 }
 
 // 5. 表单模型
