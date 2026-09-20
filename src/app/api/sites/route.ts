@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   try {
     await ensureDbInitialized()
     const scope = await getAuthUserAndScope(request)
-    if (scope && !scope.allowedMenus.includes('sites') && scope.role !== 'super_admin' && scope.role !== 'company_admin') {
+    if (!scope || (!scope.allowedMenus.includes('sites') && scope.role !== 'super_admin' && scope.role !== 'company_admin')) {
       return NextResponse.json({ error: '权限不足，无权操作站点管理' }, { status: 403 })
     }
 
@@ -85,9 +85,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '主域名不能为空' }, { status: 400 })
     }
 
-    // Check if companyId matches scope for company_admin
-    if (scope && scope.role === 'company_admin' && scope.companyId && parseInt(companyId, 10) !== scope.companyId) {
-      return NextResponse.json({ error: '无权在非本公司下创建站点' }, { status: 403 })
+    // Check if companyId matches scope bounds
+    const parsedCompanyId = parseInt(companyId, 10)
+    if (scope && scope.allowedCompanyIds && !scope.allowedCompanyIds.includes(parsedCompanyId)) {
+      return NextResponse.json({ error: '无权在非本公司主体下创建站点' }, { status: 403 })
     }
 
     const siteKey = `site_live_${Math.random().toString(36).substring(2, 8)}${Date.now().toString(36).substring(4)}`

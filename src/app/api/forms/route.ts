@@ -62,7 +62,10 @@ export async function POST(req: NextRequest) {
   try {
     await ensureDbInitialized()
     const scope = await getAuthUserAndScope(req)
-    if (scope && scope.role === 'viewer') {
+    if (!scope || !scope.allowedMenus.includes('forms')) {
+      return NextResponse.json({ success: false, message: '权限不足' }, { status: 403 })
+    }
+    if (scope.role === 'viewer') {
       return NextResponse.json({ success: false, message: '只读权限账号无法创建表单' }, { status: 403 })
     }
 
@@ -88,6 +91,10 @@ export async function POST(req: NextRequest) {
 
     const parsedCompanyId = companyId && !isNaN(parseInt(companyId, 10)) ? parseInt(companyId, 10) : null
     const parsedWebsiteId = websiteId && !isNaN(parseInt(websiteId, 10)) ? parseInt(websiteId, 10) : null
+
+    if (parsedCompanyId && scope.allowedCompanyIds && !scope.allowedCompanyIds.includes(parsedCompanyId)) {
+      return NextResponse.json({ success: false, message: '越权操作: 无法为该主体创建表单' }, { status: 403 })
+    }
 
     const form = await prisma.form.create({
       data: {

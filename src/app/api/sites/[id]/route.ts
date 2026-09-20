@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthUserAndScope } from '@/lib/rbac'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const scope = await getAuthUserAndScope(req)
+    if (!scope || !scope.allowedMenus.includes('sites')) {
+      return NextResponse.json({ success: false, message: '权限不足' }, { status: 403 })
+    }
+
     const { id } = await params
     const siteId = parseInt(id, 10)
     if (isNaN(siteId)) {
       return NextResponse.json({ success: false, message: 'Invalid site ID' }, { status: 400 })
+    }
+
+    const existing = await prisma.website.findUnique({ where: { id: siteId } })
+    if (!existing) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 })
+    if (scope.allowedCompanyIds && !scope.allowedCompanyIds.includes(existing.companyId)) {
+      return NextResponse.json({ success: false, message: '越权操作' }, { status: 403 })
     }
 
     const body = await req.json()
@@ -55,10 +67,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const scope = await getAuthUserAndScope(req)
+    if (!scope || !scope.allowedMenus.includes('sites')) {
+      return NextResponse.json({ success: false, message: '权限不足' }, { status: 403 })
+    }
+
     const { id } = await params
     const siteId = parseInt(id, 10)
     if (isNaN(siteId)) {
       return NextResponse.json({ success: false, message: 'Invalid site ID' }, { status: 400 })
+    }
+
+    const existing = await prisma.website.findUnique({ where: { id: siteId } })
+    if (!existing) return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 })
+    if (scope.allowedCompanyIds && !scope.allowedCompanyIds.includes(existing.companyId)) {
+      return NextResponse.json({ success: false, message: '越权操作' }, { status: 403 })
     }
 
     await prisma.website.delete({ where: { id: siteId } })

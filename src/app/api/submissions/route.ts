@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
     const websiteId = searchParams.get('websiteId')
     const scope = await getAuthUserAndScope(req)
 
-    if (!scope) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+    if (!scope || !scope.allowedMenus.includes('submissions')) {
+      return NextResponse.json({ success: false, message: '权限不足' }, { status: 403 })
     }
 
     const where: any = {}
