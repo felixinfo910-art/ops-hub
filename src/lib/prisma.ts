@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 
+// Ensure runtime DATABASE_URL fallback for Node.js API routes if missing in environment
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'file:./dev.db'
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
   dbInitialized: boolean | undefined
