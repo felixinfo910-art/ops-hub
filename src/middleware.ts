@@ -27,27 +27,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Route protection is handled by APIs and Client UI checking allowedMenus dynamically
-  // But strictly enforce domain-level role isolation:
-  const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
-  const host = rawHost.toLowerCase()
-  
-  if (isValid && sessionCookie) {
-    const payload = parseSessionPayload(sessionCookie.value)
-    if (payload) {
-      const isInternalOps = payload.companyId === null || payload.companyId === undefined
-      
-      if ((host.startsWith('ops.') || host.includes('ops.dtafac.com')) && !isInternalOps) {
-         // Prevent client accounts from entering the ops domain
-         return NextResponse.redirect(new URL('/api/auth/logout', request.url))
-      }
-      if ((host.startsWith('tools.') || host.includes('tools.dtafac.com')) && isInternalOps && payload.role !== 'super_admin') {
-        // Normal internal staff shouldn't log into client portal either.
-        return NextResponse.redirect(new URL('/api/auth/logout', request.url))
-      }
-    }
-  }
-  // Middleware only ensures the user is logged in
+  // Middleware ensures the user is logged in
+  // UI and API endpoints dynamically apply RBAC and render the corresponding dashboard (OpsDashboard or ToolsDashboard)
   return NextResponse.next()
 }
 
