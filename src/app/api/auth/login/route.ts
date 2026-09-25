@@ -63,13 +63,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '该账号已被禁用，请联系管理员' }, { status: 403 })
     }
 
-    const host = request.headers.get('host') || ''
+    const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+    const host = rawHost.toLowerCase()
+    const proto = request.headers.get('x-forwarded-proto') || ''
+    const isHttps = proto === 'https' || request.url.startsWith('https://')
     const isInternalOps = user.companyId === null || user.companyId === undefined
 
-    if (host.startsWith('ops.') && !isInternalOps) {
+    if ((host.startsWith('ops.') || host.includes('ops.dtafac.com')) && !isInternalOps) {
       return NextResponse.json({ error: '权限不足：企业客户阵营无法登录内部运营后台 (ops)' }, { status: 403 })
     }
-    if (host.startsWith('tools.') && isInternalOps && user.role !== 'super_admin') {
+    if ((host.startsWith('tools.') || host.includes('tools.dtafac.com')) && isInternalOps && user.role !== 'super_admin') {
       return NextResponse.json({ error: '系统拦截：内部普通员工禁止直接登入 Tools 客户前台' }, { status: 403 })
     }
 
@@ -112,7 +115,7 @@ export async function POST(request: Request) {
       value: token,
       httpOnly: true,
       path: '/',
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30,
     })
