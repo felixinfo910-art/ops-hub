@@ -87,8 +87,10 @@ export async function getAuthUserAndScope(req: Request): Promise<UserScope | nul
   const dbUser: any = await (prisma as any).user.findUnique({
     where: { id: userId },
     select: {
+      id: true,
       role: true,
       companyId: true,
+      isActive: true,
       allowedMenus: true,
       sitePermissions: {
         select: {
@@ -101,7 +103,12 @@ export async function getAuthUserAndScope(req: Request): Promise<UserScope | nul
     }
   })
 
-  const rawRole = dbUser?.role || payload.role || 'company_admin'
+  // If the account record does not exist in the database or is disabled, reject session
+  if (!dbUser || dbUser.isActive === false) {
+    return null
+  }
+
+  const rawRole = dbUser.role || 'company_admin'
   let role: 'super_admin' | 'company_admin' | 'site_manager' | 'viewer' = 'viewer'
 
   if (rawRole === 'super_admin' || rawRole === '超级管理员') {

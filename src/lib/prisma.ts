@@ -232,13 +232,13 @@ export async function ensureDbInitialized() {
         const adminHash = await hashPassword('admin123456')
         await prisma.user.create({
           data: {
-            email: 'admin@dtafac.com',
+            email: 'admin@opshub.com',
             passwordHash: adminHash,
-            name: 'Super Admin',
+            name: '超级管理员 (admin)',
             role: 'super_admin'
           }
         })
-        console.log('✅ Created default super_admin account: admin@dtafac.com / admin123456')
+        console.log('✅ Created default super_admin account: admin@opshub.com / admin123456')
       }
     } catch (createErr) {
       console.error('⚠️ Could not initialize default admin account:', createErr)

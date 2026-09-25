@@ -40,6 +40,8 @@ export default function Header() {
       .then(data => {
         if (data.authenticated) {
           setCurrentUser(data.user)
+        } else if (pathname !== '/login') {
+          router.push('/login')
         }
       })
       .catch(() => {})

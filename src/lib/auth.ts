@@ -88,5 +88,16 @@ export async function isValidSessionToken(token: string | undefined | null): Pro
   if (token === legacyToken) return true
   
   const payload = parseSessionPayload(token)
-  return payload !== null
+  if (!payload) return false
+
+  try {
+    const { prisma } = await import('./prisma')
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, isActive: true }
+    })
+    return !!user && user.isActive === true
+  } catch {
+    return true
+  }
 }
