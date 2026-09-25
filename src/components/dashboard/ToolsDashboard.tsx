@@ -70,19 +70,13 @@ export default function ToolsDashboard() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">Tools 客户获客与询盘看板</div>
-          <div className="page-subtitle">实时掌控独立站询盘跟进进度、转化效率与表单运行状态</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/submissions" className="btn btn-primary">
-            <SubmissionsIcon size={14} /> 询盘跟进中心
-          </Link>
-          <Link href="/forms" className="btn btn-secondary">
-            <FormsIcon size={14} /> 查看我的表单
-          </Link>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 16 }}>
+        <Link href="/submissions" className="btn btn-primary btn-sm">
+          <SubmissionsIcon size={14} /> 询盘跟进中心
+        </Link>
+        <Link href="/forms" className="btn btn-secondary btn-sm">
+          <FormsIcon size={14} /> 查看我的表单
+        </Link>
       </div>
 
       {loading ? (

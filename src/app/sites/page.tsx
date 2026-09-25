@@ -235,24 +235,18 @@ function SitesContent() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">独立站域名 / SSL 巡检 & 营销 Tag 注入</div>
-          <div className="page-subtitle">探针健康监控、域名 SSL 到期倒计时、GA4 / FB Pixel Tag 极速注入</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={() => handleInspect()}
-            className="btn btn-secondary"
-            disabled={inspectingId === 'all'}
-          >
-            <RefreshIcon size={14} />
-            {inspectingId === 'all' ? '正在全网探针巡检...' : '一键全网巡检'}
-          </button>
-          <button onClick={openCreateModal} className="btn btn-primary">
-            <PlusIcon size={16} /> 注册新独立站
-          </button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 16 }}>
+        <button
+          onClick={() => handleInspect()}
+          className="btn btn-secondary btn-sm"
+          disabled={inspectingId === 'all'}
+        >
+          <RefreshIcon size={14} />
+          {inspectingId === 'all' ? '正在全网探针巡检...' : '一键全网巡检'}
+        </button>
+        <button onClick={openCreateModal} className="btn btn-primary btn-sm">
+          <PlusIcon size={14} /> 注册新独立站
+        </button>
       </div>
 
       {loading ? (

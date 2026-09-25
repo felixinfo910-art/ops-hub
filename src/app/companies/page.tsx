@@ -136,13 +136,9 @@ export default function CompaniesPage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">公司与项目管理</div>
-          <div className="page-subtitle">管理多公司/租户主体、默认 SMTP 与全网 Webhook 实时通知</div>
-        </div>
-        <button onClick={openCreateModal} className="btn btn-primary">
-          <PlusIcon size={16} /> 新建公司
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        <button onClick={openCreateModal} className="btn btn-primary btn-sm">
+          <PlusIcon size={14} /> 新建公司
         </button>
       </div>
 

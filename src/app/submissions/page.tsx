@@ -132,15 +132,10 @@ function SubmissionsContent() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">询盘跟进与数据归因</div>
-          <div className="page-subtitle">共 {submissions.length} 条询盘记录，支持跨独立站筛选、跟进状态流转与数据导出</div>
-        </div>
-        {/* 【操作逻辑】 全局导出 */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         {filteredSubmissions.length > 0 && (
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-sm"
             onClick={() => exportSubmissionsToCSV(filteredSubmissions, 'inquiries_export')}
           >
             <DownloadIcon size={14} /> 导出结果 CSV ({filteredSubmissions.length})

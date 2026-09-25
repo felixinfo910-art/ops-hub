@@ -26,19 +26,13 @@ interface OpsDashboardProps {
 export default function OpsDashboard({ stats }: OpsDashboardProps) {
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">OpsHub 全网多站运营与监控中台</div>
-          <div className="page-subtitle">多公司/多独立站全姿态大盘：域名 & SSL 巡检、广告 UTM 归因、Anti-Spam 监控</div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/sites" className="btn btn-secondary">
-            <RefreshIcon size={14} /> 域名 & SSL 巡检
-          </Link>
-          <Link href="/forms/new" className="btn btn-primary">
-            + 新建表单
-          </Link>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 16 }}>
+        <Link href="/sites" className="btn btn-secondary btn-sm">
+          <RefreshIcon size={14} /> 域名 & SSL 巡检
+        </Link>
+        <Link href="/forms/new" className="btn btn-primary btn-sm">
+          + 新建表单
+        </Link>
       </div>
 
       {/* Stats Cards */}

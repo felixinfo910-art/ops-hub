@@ -66,13 +66,9 @@ export default async function FormsPage({
 
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <div className="page-title">表单管理</div>
-          <div className="page-subtitle">创建和管理询盘表单，挂载到对应独立站与公司</div>
-        </div>
-        <Link href="/forms/new" className="btn btn-primary">
-          <PlusIcon size={16} /> 新建表单
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        <Link href="/forms/new" className="btn btn-primary btn-sm">
+          <PlusIcon size={14} /> 新建表单
         </Link>
       </div>
 
