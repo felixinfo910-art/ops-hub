@@ -23,6 +23,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const body = await req.json()
     const {
+      companyId,
       name,
       domain,
       adminUrl,
@@ -39,9 +40,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       customHeaderScript
     } = body
 
+    const newCompanyId = companyId ? parseInt(companyId, 10) : undefined
+
+    // If company assignment changed, sync associated forms & submissions companyId
+    if (newCompanyId && newCompanyId !== existing.companyId) {
+      await prisma.form.updateMany({ where: { websiteId: siteId }, data: { companyId: newCompanyId } })
+      await prisma.formSubmission.updateMany({ where: { websiteId: siteId }, data: { companyId: newCompanyId } })
+    }
+
     const updated = await prisma.website.update({
       where: { id: siteId },
       data: {
+        ...(newCompanyId && { companyId: newCompanyId }),
         name: name ? name.trim() : undefined,
         domain: domain ? domain.trim() : undefined,
         adminUrl: adminUrl !== undefined ? (adminUrl ? adminUrl.trim() : null) : undefined,
@@ -84,6 +94,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ success: false, message: '越权操作' }, { status: 403 })
     }
 
+    // Safely unbind forms & submissions before deleting website to prevent foreign key errors
+    await prisma.formSubmission.updateMany({ where: { websiteId: siteId }, data: { websiteId: null } })
+    await prisma.form.updateMany({ where: { websiteId: siteId }, data: { websiteId: null } })
     await prisma.website.delete({ where: { id: siteId } })
     return NextResponse.json({ success: true })
   } catch (error: any) {

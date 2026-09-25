@@ -28,6 +28,24 @@ export async function middleware(request: NextRequest) {
   }
 
   // Route protection is handled by APIs and Client UI checking allowedMenus dynamically
+  // But strictly enforce domain-level role isolation:
+  const host = request.headers.get('host') || ''
+  
+  if (isValid && sessionCookie) {
+    const payload = parseSessionPayload(sessionCookie.value)
+    if (payload) {
+      const isInternalOps = payload.companyId === null || payload.companyId === undefined
+      
+      if (host.startsWith('ops.') && !isInternalOps) {
+         // Prevent client accounts from entering the ops domain
+         return NextResponse.redirect(new URL('/api/auth/logout', request.url))
+      }
+      if (host.startsWith('tools.') && isInternalOps && payload.role !== 'super_admin') {
+        // Normal internal staff shouldn't log into client portal either.
+        return NextResponse.redirect(new URL('/api/auth/logout', request.url))
+      }
+    }
+  }
   // Middleware only ensures the user is logged in
   return NextResponse.next()
 }

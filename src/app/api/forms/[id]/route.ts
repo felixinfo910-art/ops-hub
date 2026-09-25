@@ -66,6 +66,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       autoReplyCatalogUrl
     } = body
 
+    let finalCompanyId = companyId !== undefined ? (companyId ? parseInt(companyId, 10) : null) : undefined
+    const finalWebsiteId = websiteId !== undefined ? (websiteId ? parseInt(websiteId, 10) : null) : undefined
+
+    if (finalWebsiteId) {
+      const site = await prisma.website.findUnique({ where: { id: finalWebsiteId }, select: { companyId: true } })
+      if (site && site.companyId) {
+        finalCompanyId = site.companyId
+      }
+    }
+
     const form = await prisma.form.update({
       where: { id: parseInt(id) },
       data: {
@@ -78,8 +88,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(customCss !== undefined && { customCss }),
         ...(successMessage !== undefined && { successMessage }),
         ...(isActive !== undefined && { isActive }),
-        ...(companyId !== undefined && { companyId: companyId ? parseInt(companyId, 10) : null }),
-        ...(websiteId !== undefined && { websiteId: websiteId ? parseInt(websiteId, 10) : null }),
+        ...(finalCompanyId !== undefined && { companyId: finalCompanyId }),
+        ...(finalWebsiteId !== undefined && { websiteId: finalWebsiteId }),
         ...(autoReplyEnabled !== undefined && { autoReplyEnabled: Boolean(autoReplyEnabled) }),
         ...(autoReplySubject !== undefined && { autoReplySubject }),
         ...(autoReplyBody !== undefined && { autoReplyBody }),

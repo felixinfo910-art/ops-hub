@@ -27,8 +27,22 @@ const SYSTEM_ROLE_NAME_MAP: Record<string, string> = {
   viewer: '数据观察员',
 }
 
+function resolveCustomOrRoleMenus(role: string, allowedMenusJson?: string | null): string[] {
+  if (allowedMenusJson) {
+    try {
+      const parsed = JSON.parse(allowedMenusJson)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+      }
+    } catch {}
+  }
+  return ALL_SYSTEM_MENUS
+    .filter(m => m.defaultFor.includes(role as any))
+    .map(m => m.key)
+}
+
 export async function computeUserMenusAsync(role: string, allowedMenusJson?: string | null): Promise<string[]> {
-  // 1. ALWAYS query the live PermissionGroup first to ensure 100% sync (联动)
+  // 1. Query the live PermissionGroup first for role-based permission sync
   const groupName = SYSTEM_ROLE_NAME_MAP[role] || role
   if (groupName) {
     try {
@@ -44,47 +58,12 @@ export async function computeUserMenusAsync(role: string, allowedMenusJson?: str
     } catch {}
   }
 
-  // 2. If no group exists or it's empty, fallback to the user's personal snapshot
-  let customMenus: string[] | null = null
-  if (allowedMenusJson) {
-    try {
-      const parsed = JSON.parse(allowedMenusJson)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        customMenus = parsed
-      }
-    } catch {}
-  }
-
-  if (customMenus && customMenus.length > 0) {
-    return customMenus
-  }
-
-
-  // Fallback to static role defaults
-  return ALL_SYSTEM_MENUS
-    .filter(m => m.defaultFor.includes(role as any))
-    .map(m => m.key)
+  // 2. Fallback to user custom menu snapshot or role defaults
+  return resolveCustomOrRoleMenus(role, allowedMenusJson)
 }
 
 export function computeUserMenus(role: string, allowedMenusJson?: string | null): string[] {
-  let customMenus: string[] | null = null
-  if (allowedMenusJson) {
-    try {
-      const parsed = JSON.parse(allowedMenusJson)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        customMenus = parsed
-      }
-    } catch {}
-  }
-
-  if (customMenus && customMenus.length > 0) {
-    return customMenus
-  }
-
-  // Fallback to static role defaults
-  return ALL_SYSTEM_MENUS
-    .filter(m => m.defaultFor.includes(role as any))
-    .map(m => m.key)
+  return resolveCustomOrRoleMenus(role, allowedMenusJson)
 }
 
 export async function getAuthUserAndScope(req: Request): Promise<UserScope | null> {

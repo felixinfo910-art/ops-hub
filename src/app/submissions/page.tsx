@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { exportSubmissionsToCSV } from '@/lib/csv'
+import { DownloadIcon, TrashIcon } from '@/components/common/Icons'
 
 interface SubmissionItem {
   id: number
@@ -27,29 +28,44 @@ interface SubmissionItem {
 }
 
 const STATUS_LABELS: Record<string, { label: string; badge: string }> = {
-  pending: { label: '⏳ 待跟进', badge: 'badge-yellow' },
-  contacted: { label: '💬 已联系', badge: 'badge-blue' },
-  qualified: { label: '🎯 有效意向', badge: 'badge-green' },
-  closed: { label: '🎉 已成交', badge: 'badge-purple' },
-  junk: { label: '❌ 无效/放弃', badge: 'badge-red' },
+  pending: { label: '待跟进', badge: 'badge-yellow' },
+  contacted: { label: '已联系', badge: 'badge-blue' },
+  qualified: { label: '有效意向', badge: 'badge-green' },
+  closed: { label: '已成交', badge: 'badge-purple' },
+  junk: { label: '无效/放弃', badge: 'badge-red' },
 }
 
 function SubmissionsContent() {
   const searchParams = useSearchParams()
   const companyIdFilter = searchParams.get('companyId')
-  const websiteIdFilter = searchParams.get('websiteId')
+  const initialWebsiteId = searchParams.get('websiteId')
 
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([])
+  const [websites, setWebsites] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+
+  // 【查逻辑】 Query & Filter States
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>(initialWebsiteId || 'all')
   const [spamFilter, setSpamFilter] = useState<'all' | 'valid' | 'spam'>('valid')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+
+  // Load sites for the filter dropdown
+  useEffect(() => {
+    fetch('/api/sites')
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) setWebsites(res.websites || [])
+      })
+      .catch(console.error)
+  }, [])
 
   const fetchSubmissions = () => {
     setLoading(true)
     const params = new URLSearchParams()
     if (companyIdFilter) params.set('companyId', companyIdFilter)
-    if (websiteIdFilter) params.set('websiteId', websiteIdFilter)
+    if (selectedWebsiteId && selectedWebsiteId !== 'all') params.set('websiteId', selectedWebsiteId)
 
     const query = params.toString() ? `?${params.toString()}` : ''
     fetch(`/api/submissions${query}`)
@@ -62,7 +78,7 @@ function SubmissionsContent() {
 
   useEffect(() => {
     fetchSubmissions()
-  }, [companyIdFilter, websiteIdFilter])
+  }, [companyIdFilter, selectedWebsiteId])
 
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
@@ -98,10 +114,19 @@ function SubmissionsContent() {
     }
   }
 
+  // Filtered submissions based on search, spam, and status
   const filteredSubmissions = submissions.filter(s => {
     if (spamFilter === 'valid' && s.isSpam) return false
     if (spamFilter === 'spam' && !s.isSpam) return false
     if (statusFilter !== 'all' && s.status !== statusFilter) return false
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const inData = s.data.toLowerCase().includes(q)
+      const inEmail = (s.ip || '').toLowerCase().includes(q) || (s.country || '').toLowerCase().includes(q)
+      const inForm = (s.form?.name || '').toLowerCase().includes(q)
+      const inSite = (s.website?.name || s.website?.domain || '').toLowerCase().includes(q)
+      if (!inData && !inEmail && !inForm && !inSite) return false
+    }
     return true
   })
 
@@ -109,56 +134,92 @@ function SubmissionsContent() {
     <div className="page">
       <div className="page-header">
         <div>
-          <div className="page-title">📥 询盘 CRM 跟进与渠道归因</div>
-          <div className="page-subtitle">共 {submissions.length} 条询盘记录，支持流转跟进状态、自定义标注与隔离导出</div>
+          <div className="page-title">询盘跟进与数据归因</div>
+          <div className="page-subtitle">共 {submissions.length} 条询盘记录，支持跨独立站筛选、跟进状态流转与数据导出</div>
         </div>
+        {/* 【操作逻辑】 全局导出 */}
         {filteredSubmissions.length > 0 && (
           <button
             className="btn btn-secondary"
-            onClick={() => exportSubmissionsToCSV(filteredSubmissions, 'all_inquiries')}
+            onClick={() => exportSubmissionsToCSV(filteredSubmissions, 'inquiries_export')}
           >
-            📥 导出筛选结果 CSV
+            <DownloadIcon size={14} /> 导出结果 CSV ({filteredSubmissions.length})
           </button>
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            className={`btn ${spamFilter === 'valid' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSpamFilter('valid')}
-          >
-            ✅ 有效询盘 ({submissions.filter(s => !s.isSpam).length})
-          </button>
-          <button
-            className={`btn ${spamFilter === 'spam' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSpamFilter('spam')}
-          >
-            🚫 拦截的垃圾询盘 ({submissions.filter(s => s.isSpam).length})
-          </button>
-          <button
-            className={`btn ${spamFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setSpamFilter('all')}
-          >
-            📋 全部记录 ({submissions.length})
-          </button>
-        </div>
+      {/* 【查逻辑】 独立多维度查询工具栏 */}
+      <div className="card" style={{ padding: 16, marginBottom: 20, background: 'var(--bg-card)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Row 1: Spam Tab + Search Input */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                className={`btn btn-sm ${spamFilter === 'valid' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSpamFilter('valid')}
+              >
+                有效询盘 ({submissions.filter(s => !s.isSpam).length})
+              </button>
+              <button
+                className={`btn btn-sm ${spamFilter === 'spam' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSpamFilter('spam')}
+              >
+                垃圾拦截 ({submissions.filter(s => s.isSpam).length})
+              </button>
+              <button
+                className={`btn btn-sm ${spamFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setSpamFilter('all')}
+              >
+                全部记录 ({submissions.length})
+              </button>
+            </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>跟进状态:</span>
-          <select
-            className="form-input form-select"
-            style={{ width: 'auto', padding: '6px 12px', fontSize: 13 }}
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value="all">全部状态</option>
-            <option value="pending">⏳ 待跟进</option>
-            <option value="contacted">💬 已联系</option>
-            <option value="qualified">🎯 有效意向</option>
-            <option value="closed">🎉 已成交</option>
-            <option value="junk">❌ 无效/放弃</option>
-          </select>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="🔍 搜索提交内容、邮箱、国家或来源表单..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ maxWidth: 300, padding: '6px 12px', fontSize: 13 }}
+            />
+          </div>
+
+          {/* Row 2: Website Filter + Status Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>按站点筛选:</span>
+              <select
+                className="form-input form-select"
+                style={{ width: 'auto', padding: '5px 10px', fontSize: 13 }}
+                value={selectedWebsiteId}
+                onChange={e => setSelectedWebsiteId(e.target.value)}
+              >
+                <option value="all">全部独立站 ({websites.length} 个)</option>
+                {websites.map(w => (
+                  <option key={w.id} value={w.id.toString()}>
+                    {w.name} ({w.domain})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>跟进状态:</span>
+              <select
+                className="form-input form-select"
+                style={{ width: 'auto', padding: '5px 10px', fontSize: 13 }}
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+              >
+                <option value="all">全部跟进状态</option>
+                <option value="pending">待跟进</option>
+                <option value="contacted">已联系</option>
+                <option value="qualified">有效意向</option>
+                <option value="closed">已成交</option>
+                <option value="junk">无效/放弃</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -206,7 +267,7 @@ function SubmissionsContent() {
                       <td>
                         {s.isSpam ? (
                           <span className="badge badge-red" title={s.spamReason || 'Spam'}>
-                            🚫 垃圾 [{s.spamReason}]
+                            垃圾 [{s.spamReason}]
                           </span>
                         ) : (
                           <span className="badge badge-green">有效询盘</span>
@@ -219,11 +280,11 @@ function SubmissionsContent() {
                           value={s.status || 'pending'}
                           onChange={e => handleUpdateStatus(s.id, e.target.value)}
                         >
-                          <option value="pending">⏳ 待跟进</option>
-                          <option value="contacted">💬 已联系</option>
-                          <option value="qualified">🎯 有效意向</option>
-                          <option value="closed">🎉 已成交</option>
-                          <option value="junk">❌ 无效/放弃</option>
+                          <option value="pending">待跟进</option>
+                          <option value="contacted">已联系</option>
+                          <option value="qualified">有效意向</option>
+                          <option value="closed">已成交</option>
+                          <option value="junk">无效/放弃</option>
                         </select>
                       </td>
                       <td style={{ whiteSpace: 'nowrap', fontSize: 12, color: 'var(--text-muted)' }}>
@@ -274,7 +335,9 @@ function SubmissionsContent() {
                           className="btn btn-danger btn-sm"
                           disabled={deletingId === s.id}
                           onClick={() => handleDelete(s.id)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                         >
+                          <TrashIcon size={12} />
                           {deletingId === s.id ? '删除中...' : '删除'}
                         </button>
                       </td>

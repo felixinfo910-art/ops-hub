@@ -8,7 +8,6 @@ export async function POST() {
     value: '',
     httpOnly: true,
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? '.dtafac.com' : undefined,
     maxAge: 0,
   })
   return response

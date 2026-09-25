@@ -89,8 +89,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 })
     }
 
-    const parsedCompanyId = companyId && !isNaN(parseInt(companyId, 10)) ? parseInt(companyId, 10) : null
+    let parsedCompanyId = companyId && !isNaN(parseInt(companyId, 10)) ? parseInt(companyId, 10) : null
     const parsedWebsiteId = websiteId && !isNaN(parseInt(websiteId, 10)) ? parseInt(websiteId, 10) : null
+
+    // Auto-inherit companyId from website if websiteId is specified
+    if (parsedWebsiteId) {
+      const targetSite = await prisma.website.findUnique({ where: { id: parsedWebsiteId }, select: { companyId: true } })
+      if (targetSite && targetSite.companyId) {
+        parsedCompanyId = targetSite.companyId
+      }
+    }
 
     if (parsedCompanyId && scope.allowedCompanyIds && !scope.allowedCompanyIds.includes(parsedCompanyId)) {
       return NextResponse.json({ success: false, message: '越权操作: 无法为该主体创建表单' }, { status: 403 })

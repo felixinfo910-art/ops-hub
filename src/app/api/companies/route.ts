@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '公司名称不能为空' }, { status: 400 })
     }
 
-    const companyCode = (code || `comp_${Date.now().toString(36)}`).trim().toLowerCase()
+    const companyCode = code ? code.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') : `comp_${Date.now().toString(36)}`
 
     const existing = await prisma.company.findUnique({
       where: { code: companyCode }

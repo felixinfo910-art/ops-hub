@@ -1,6 +1,15 @@
 'use client'
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import {
+  PlusIcon,
+  RefreshIcon,
+  ExternalLinkIcon,
+  EditIcon,
+  CloseIcon,
+  CopyIcon,
+  CheckIcon,
+} from '@/components/common/Icons'
 
 interface Company {
   id: number
@@ -228,7 +237,7 @@ function SitesContent() {
     <div className="page">
       <div className="page-header">
         <div>
-          <div className="page-title">🌐 独立站域名 / SSL 巡检 & 营销 Tag 注入</div>
+          <div className="page-title">独立站域名 / SSL 巡检 & 营销 Tag 注入</div>
           <div className="page-subtitle">探针健康监控、域名 SSL 到期倒计时、GA4 / FB Pixel Tag 极速注入</div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -237,10 +246,11 @@ function SitesContent() {
             className="btn btn-secondary"
             disabled={inspectingId === 'all'}
           >
-            {inspectingId === 'all' ? '⚡ 正在全网探针巡检...' : '⚡ 一键全网巡检'}
+            <RefreshIcon size={14} />
+            {inspectingId === 'all' ? '正在全网探针巡检...' : '一键全网巡检'}
           </button>
           <button onClick={openCreateModal} className="btn btn-primary">
-            ＋ 注册新独立站
+            <PlusIcon size={16} /> 注册新独立站
           </button>
         </div>
       </div>
@@ -253,11 +263,10 @@ function SitesContent() {
       ) : websites.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-icon">🌐</div>
             <div className="empty-title">暂无独立站</div>
             <div className="empty-desc">注册您的第一个 WordPress 或独立站，获取站点识别 Site Key</div>
             <button onClick={openCreateModal} className="btn btn-primary">
-              ＋ 注册新独立站
+              <PlusIcon size={16} /> 注册新独立站
             </button>
           </div>
         </div>
@@ -267,130 +276,113 @@ function SitesContent() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>站点名称</th>
+                  <th>独立站名称与域名</th>
                   <th>归属公司</th>
-                  <th>域名 & 可达性 Uptime</th>
-                  <th>SSL 证书监控</th>
+                  <th>健康与 SSL 探针</th>
                   <th>营销 Tag 注入</th>
                   <th>识别密钥 (Site Key)</th>
-                  <th>询盘与表单</th>
-                  <th>操作</th>
+                  <th>数据关联</th>
+                  <th style={{ textAlign: 'right' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {websites.map(w => {
                   const sslDays = calculateSslDays(w.sslExpiresAt)
+                  const defaultBase = w.domain.startsWith('http') ? w.domain : `https://${w.domain}`
+                  const rawAdmin = w.adminUrl?.trim() || `${defaultBase.replace(/\/$/, '')}/wp-admin`
+                  const targetAdmin = rawAdmin.startsWith('http') ? rawAdmin : `https://${rawAdmin}`
+
                   return (
                     <tr key={w.id}>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{w.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>ID: #{w.id}</div>
-                      </td>
-                      <td>
-                        <span className="badge badge-blue">{w.company?.name || '通用'}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14 }}>{w.name}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>#{w.id}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                           <a
-                            href={w.domain.startsWith('http') ? w.domain : `https://${w.domain}`}
+                            href={defaultBase}
                             target="_blank"
                             rel="noreferrer"
-                            className="btn btn-secondary btn-sm"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', fontSize: 12, textDecoration: 'none', width: 'fit-content' }}
+                            style={{ fontSize: 12, color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: 3, fontWeight: 500 }}
                           >
-                            🌐 前台: {w.domain.replace(/^https?:\/\//, '')} 🔗
+                            {w.domain.replace(/^https?:\/\//, '')} <ExternalLinkIcon size={11} />
                           </a>
-                          {(() => {
-                            const defaultBase = w.domain.startsWith('http') ? w.domain : `https://${w.domain}`
-                            const rawAdmin = w.adminUrl?.trim() || `${defaultBase.replace(/\/$/, '')}/wp-admin`
-                            const targetAdmin = rawAdmin.startsWith('http') ? rawAdmin : `https://${rawAdmin}`
-                            return (
-                              <a
-                                href={targetAdmin}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn btn-secondary btn-sm"
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                  padding: '3px 8px',
-                                  fontSize: 12,
-                                  color: 'var(--primary)',
-                                  background: 'var(--primary-light)',
-                                  borderColor: 'var(--primary)',
-                                  fontWeight: 600,
-                                  textDecoration: 'none',
-                                  width: 'fit-content'
-                                }}
-                              >
-                                ⚙️ 网站后台 ↗
-                              </a>
-                            )
-                          })()}
+                          <span style={{ color: 'var(--border)' }}>|</span>
+                          <a
+                            href={targetAdmin}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: 11, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 2 }}
+                          >
+                            后台 <ExternalLinkIcon size={10} />
+                          </a>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      </td>
+                      <td>
+                        <span className="badge badge-blue">{w.company?.name || '通用主体'}</span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
                           {w.lastHttpStatus === 200 ? (
                             <span className="badge badge-green">200 OK ({w.lastResponseTimeMs || 0}ms)</span>
                           ) : w.lastHttpStatus ? (
                             <span className="badge badge-red">HTTP {w.lastHttpStatus}</span>
                           ) : (
-                            <span className="badge badge-yellow">未巡检</span>
+                            <span className="badge badge-yellow">未检测</span>
+                          )}
+                          {sslDays !== null && (
+                            <span className={`badge ${sslDays > 30 ? 'badge-green' : 'badge-red'}`}>
+                              SSL {sslDays}天
+                            </span>
                           )}
                         </div>
                       </td>
                       <td>
-                        {sslDays !== null ? (
-                          sslDays > 30 ? (
-                            <span className="badge badge-green">SSL 剩余 {sslDays} 天</span>
-                          ) : (
-                            <span className="badge badge-red">⚠️ SSL 剩余 {sslDays} 天到期</span>
-                          )
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>未知</span>
-                        )}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          {w.ga4MeasurementId && <span className="badge badge-blue" style={{ fontSize: 10 }}>GA4: {w.ga4MeasurementId}</span>}
-                          {w.fbPixelId && <span className="badge badge-yellow" style={{ fontSize: 10 }}>Pixel: {w.fbPixelId}</span>}
-                          {w.gtmContainerId && <span className="badge badge-green" style={{ fontSize: 10 }}>GTM: {w.gtmContainerId}</span>}
-                          {!w.ga4MeasurementId && !w.fbPixelId && !w.gtmContainerId && <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>未配置</span>}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {w.ga4MeasurementId && <span className="badge badge-blue" style={{ fontSize: 10 }}>GA4</span>}
+                          {w.fbPixelId && <span className="badge badge-yellow" style={{ fontSize: 10 }}>Pixel</span>}
+                          {w.gtmContainerId && <span className="badge badge-green" style={{ fontSize: 10 }}>GTM</span>}
+                          {!w.ga4MeasurementId && !w.fbPixelId && !w.gtmContainerId && (
+                            <span style={{ color: 'var(--text-subtle)', fontSize: 12 }}>无</span>
+                          )}
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <code className="code-block" style={{ fontSize: 11, padding: '2px 6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <code className="code-block" style={{ fontSize: 11, padding: '2px 6px', letterSpacing: '-0.3px' }}>
                             {w.siteKey}
                           </code>
                           <button
                             onClick={() => copyToClipboard(w.siteKey)}
                             className="btn btn-secondary btn-sm"
-                            style={{ padding: '2px 6px', fontSize: 11 }}
+                            style={{ padding: '2px 6px', fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 3 }}
                           >
-                            {copiedKey === w.siteKey ? '已复制 ✓' : '复制'}
+                            {copiedKey === w.siteKey ? <CheckIcon size={12} /> : <CopyIcon size={12} />}
                           </button>
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontSize: 12 }}>
-                          表单: <strong style={{ color: 'var(--primary)' }}>{w._count?.forms || 0}</strong> / 询盘: <strong style={{ color: 'var(--success)' }}>{w._count?.submissions || 0}</strong>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                          表单 <strong style={{ color: 'var(--text)' }}>{w._count?.forms || 0}</strong> / 询盘 <strong style={{ color: 'var(--primary)' }}>{w._count?.submissions || 0}</strong>
                         </div>
                       </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6 }}>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
                           <button
                             className="btn btn-secondary btn-sm"
                             disabled={inspectingId === w.id}
                             onClick={() => handleInspect(w.id, w.domain)}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                           >
-                            {inspectingId === w.id ? '巡检中...' : '🔍 巡检'}
+                            <RefreshIcon size={12} /> {inspectingId === w.id ? '巡检中' : '巡检'}
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
                             onClick={() => openEditModal(w)}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                           >
-                            编辑
+                            <EditIcon size={12} /> 编辑
                           </button>
                         </div>
                       </td>
@@ -408,8 +400,10 @@ function SitesContent() {
         <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: 720, maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
-              <div className="modal-title">{editingSite ? `🌐 编辑独立站配置 (${editingSite.name})` : '🌐 注册新独立站'}</div>
-              <button onClick={() => setShowModal(false)} className="btn btn-secondary btn-sm">✕</button>
+              <div className="modal-title">{editingSite ? `编辑独立站配置 (${editingSite.name})` : '注册新独立站'}</div>
+              <button onClick={() => setShowModal(false)} className="btn btn-secondary btn-sm" style={{ padding: 6 }}>
+                <CloseIcon size={14} />
+              </button>
             </div>
             <form onSubmit={handleSave}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -472,7 +466,7 @@ function SitesContent() {
                 {/* Marketing Tag Injection Section */}
                 <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10, border: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10, color: 'var(--primary)' }}>
-                    📊 营销 Tag 代码集中注入 (SDK Automation)
+                    营销 Tag 代码集中注入 (SDK Automation)
                   </div>
                   <div className="form-hint" style={{ marginBottom: 10 }}>控制台配置后，该独立站加载表单时自动载入转化跟踪 Tag，免去独立站修改代码</div>
 
@@ -525,7 +519,7 @@ function SitesContent() {
                 {/* Security Section */}
                 <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10, border: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: 'var(--primary)' }}>
-                    🛡️ 安全抗刷策略配置
+                    安全抗刷策略配置
                   </div>
                   <div className="form-group">
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
@@ -552,7 +546,7 @@ function SitesContent() {
                 {/* Webhook Section */}
                 <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10, border: '1px solid var(--border)' }}>
                   <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: 'var(--primary)' }}>
-                    🔔 站点专属 Webhook 实时分发 (覆盖公司默认)
+                    站点专属 Webhook 实时分发 (覆盖公司默认)
                   </div>
                   <div className="form-group">
                     <label className="form-label" style={{ fontSize: 12 }}>飞书机器人 Webhook</label>

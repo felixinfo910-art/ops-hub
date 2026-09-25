@@ -62,6 +62,15 @@ export async function sendEmail({ to, subject, html, smtpConfig }: SendEmailOpti
   }
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export function buildSubmissionEmail(
   formName: string,
   formData: Record<string, string>,
@@ -82,21 +91,24 @@ export function buildSubmissionEmail(
     .map(
       ([key, value]) => `
       <tr>
-        <td style="padding:10px 16px;font-weight:600;color:#374151;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">${key}</td>
-        <td style="padding:10px 16px;color:#111827;border-bottom:1px solid #e5e7eb;">${value || '-'}</td>
+        <td style="padding:10px 16px;font-weight:600;color:#374151;background:#f9fafb;width:160px;border-bottom:1px solid #e5e7eb;">${escapeHtml(key)}</td>
+        <td style="padding:10px 16px;color:#111827;border-bottom:1px solid #e5e7eb;">${escapeHtml(value || '-')}</td>
       </tr>`
     )
     .join('')
 
+  const safePageUrl = meta.pageUrl ? escapeHtml(meta.pageUrl) : ''
+  const safeReferrer = meta.referrer ? escapeHtml(meta.referrer) : ''
+
   const metaRows = [
-    meta.companyName && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">所属公司</td><td style="padding:6px 16px;font-size:13px;">${meta.companyName}</td></tr>`,
-    meta.siteName && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">独立站</td><td style="padding:6px 16px;font-size:13px;">${meta.siteName}</td></tr>`,
-    meta.pageUrl && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">来源页面</td><td style="padding:6px 16px;font-size:13px;"><a href="${meta.pageUrl}">${meta.pageUrl}</a></td></tr>`,
-    meta.referrer && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">来源网站</td><td style="padding:6px 16px;font-size:13px;">${meta.referrer}</td></tr>`,
-    meta.utmSource && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">来源渠道</td><td style="padding:6px 16px;font-size:13px;">${meta.utmSource}</td></tr>`,
-    meta.utmKeyword && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">关键词</td><td style="padding:6px 16px;font-size:13px;">${meta.utmKeyword}</td></tr>`,
-    meta.country && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">地区</td><td style="padding:6px 16px;font-size:13px;">${meta.city || ''} ${meta.country}</td></tr>`,
-    meta.ip && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">IP</td><td style="padding:6px 16px;font-size:13px;">${meta.ip}</td></tr>`,
+    meta.companyName && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">所属公司</td><td style="padding:6px 16px;font-size:13px;">${escapeHtml(meta.companyName)}</td></tr>`,
+    meta.siteName && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">独立站</td><td style="padding:6px 16px;font-size:13px;">${escapeHtml(meta.siteName)}</td></tr>`,
+    meta.pageUrl && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">来源页面</td><td style="padding:6px 16px;font-size:13px;"><a href="${safePageUrl}">${safePageUrl}</a></td></tr>`,
+    meta.referrer && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">来源网站</td><td style="padding:6px 16px;font-size:13px;">${safeReferrer}</td></tr>`,
+    meta.utmSource && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">来源渠道</td><td style="padding:6px 16px;font-size:13px;">${escapeHtml(meta.utmSource)}</td></tr>`,
+    meta.utmKeyword && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">关键词</td><td style="padding:6px 16px;font-size:13px;">${escapeHtml(meta.utmKeyword)}</td></tr>`,
+    meta.country && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">地区</td><td style="padding:6px 16px;font-size:13px;">${escapeHtml(meta.city || '')} ${escapeHtml(meta.country)}</td></tr>`,
+    meta.ip && `<tr><td style="padding:6px 16px;color:#6b7280;font-size:13px;">IP</td><td style="padding:6px 16px;font-size:13px;">${escapeHtml(meta.ip)}</td></tr>`,
   ]
     .filter(Boolean)
     .join('')

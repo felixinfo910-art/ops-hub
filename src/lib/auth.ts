@@ -38,16 +38,40 @@ export async function getExpectedToken(): Promise<string> {
   return createSessionToken(getAdminUsername(), getAdminPassword())
 }
 
-// Simple base64url encode JSON session token for multi-tenant auth
+const SECRET_SALT = process.env.SESSION_SECRET || 'opshub-secure-session-salt-2026'
+
+// Simple Base64URL + Signature for session token tamper-proofing
 export function serializeSessionPayload(payload: SessionPayload): string {
   const jsonStr = JSON.stringify(payload)
-  return Buffer.from(jsonStr).toString('base64url')
+  const encoded = Buffer.from(jsonStr).toString('base64url')
+  const sig = generateSignature(encoded)
+  return `${encoded}.${sig}`
+}
+
+function generateSignature(str: string): string {
+  let hash = 0
+  const combined = `${str}:${SECRET_SALT}`
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash |= 0
+  }
+  return Math.abs(hash).toString(36)
 }
 
 export function parseSessionPayload(token: string | undefined | null): SessionPayload | null {
   if (!token) return null
   try {
-    const jsonStr = Buffer.from(token, 'base64url').toString('utf-8')
+    const parts = token.split('.')
+    const rawPayload = parts[0]
+    const sig = parts[1]
+
+    if (sig && sig !== generateSignature(rawPayload)) {
+      console.warn('Session token signature invalid - possible tampering attempt')
+      return null
+    }
+
+    const jsonStr = Buffer.from(rawPayload, 'base64url').toString('utf-8')
     const payload = JSON.parse(jsonStr)
     if (payload && payload.userId && payload.role) {
       return payload as SessionPayload

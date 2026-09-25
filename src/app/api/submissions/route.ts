@@ -5,9 +5,10 @@ import { getAuthUserAndScope } from '@/lib/rbac'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const limit = parseInt(searchParams.get('limit') || '100')
+    const limit = parseInt(searchParams.get('limit') || '1000', 10)
     const companyId = searchParams.get('companyId')
     const websiteId = searchParams.get('websiteId')
+    const search = searchParams.get('search')
     const scope = await getAuthUserAndScope(req)
 
     if (!scope || !scope.allowedMenus.includes('submissions')) {
@@ -15,6 +16,17 @@ export async function GET(req: NextRequest) {
     }
 
     const where: any = {}
+
+    if (search && search.trim()) {
+      const q = search.trim()
+      where.OR = [
+        { data: { contains: q } },
+        { ip: { contains: q } },
+        { pageUrl: { contains: q } },
+        { utmSource: { contains: q } },
+        { utmKeyword: { contains: q } },
+      ]
+    }
     
     // Strict RBAC Data Override Layer
     if (scope.role === 'super_admin') {

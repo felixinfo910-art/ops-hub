@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { PlusIcon, EditIcon, SubmissionsIcon } from '@/components/common/Icons'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,19 +68,22 @@ export default async function FormsPage({
     <div className="page">
       <div className="page-header">
         <div>
-          <div className="page-title">◫ 表单管理</div>
+          <div className="page-title">表单管理</div>
           <div className="page-subtitle">创建和管理询盘表单，挂载到对应独立站与公司</div>
         </div>
-        <Link href="/forms/new" className="btn btn-primary">＋ 新建表单</Link>
+        <Link href="/forms/new" className="btn btn-primary">
+          <PlusIcon size={16} /> 新建表单
+        </Link>
       </div>
 
       <div className="card">
         {forms.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">◫</div>
             <div className="empty-title">暂无表单</div>
             <div className="empty-desc">创建第一个表单，获取 Form ID 并绑定独立站</div>
-            <Link href="/forms/new" className="btn btn-primary">＋ 创建第一个表单</Link>
+            <Link href="/forms/new" className="btn btn-primary">
+              <PlusIcon size={16} /> 创建第一个表单
+            </Link>
           </div>
         ) : (
           <div className="table-wrap">
@@ -155,8 +159,12 @@ export default async function FormsPage({
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <Link href={`/forms/${form.id}`} className="btn btn-secondary btn-sm">编辑</Link>
-                        <Link href={`/forms/${form.id}?tab=submissions`} className="btn btn-secondary btn-sm">询盘</Link>
+                        <Link href={`/forms/${form.id}`} className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <EditIcon size={12} /> 编辑
+                        </Link>
+                        <Link href={`/forms/${form.id}?tab=submissions`} className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <SubmissionsIcon size={12} /> 询盘
+                        </Link>
                       </div>
                     </td>
                   </tr>

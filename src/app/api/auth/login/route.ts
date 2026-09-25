@@ -50,7 +50,6 @@ export async function POST(request: Request) {
           value: token,
           httpOnly: true,
           path: '/',
-          domain: process.env.NODE_ENV === 'production' ? '.dtafac.com' : undefined,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           maxAge: 60 * 60 * 24 * 30,
@@ -62,6 +61,16 @@ export async function POST(request: Request) {
 
     if (!user.isActive) {
       return NextResponse.json({ error: '该账号已被禁用，请联系管理员' }, { status: 403 })
+    }
+
+    const host = request.headers.get('host') || ''
+    const isInternalOps = user.companyId === null || user.companyId === undefined
+
+    if (host.startsWith('ops.') && !isInternalOps) {
+      return NextResponse.json({ error: '权限不足：企业客户阵营无法登录内部运营后台 (ops)' }, { status: 403 })
+    }
+    if (host.startsWith('tools.') && isInternalOps && user.role !== 'super_admin') {
+      return NextResponse.json({ error: '系统拦截：内部普通员工禁止直接登入 Tools 客户前台' }, { status: 403 })
     }
 
     // Verify password hash
@@ -103,7 +112,6 @@ export async function POST(request: Request) {
       value: token,
       httpOnly: true,
       path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.dtafac.com' : undefined,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30,

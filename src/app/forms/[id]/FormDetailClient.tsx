@@ -392,17 +392,17 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
 
         {/* Appearance & Live Preview Tab */}
         {(activeTab === 'appearance' || activeTab === 'preview') && (
-          <div style={{ display: 'grid', gridTemplateColumns: '440px 1fr', gap: 20, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 20, alignItems: 'stretch' }}>
             {/* Left: Style Customizer */}
-            <div className="card">
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div className="card-header">
-                <div className="card-title">🎨 外观样式自定义</div>
+                <div className="card-title">外观样式自定义</div>
               </div>
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16, flex: 1 }}>
                 
                 {/* Preset Themes */}
-                <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 12, borderRadius: 10 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--primary)' }}>✨ 一键预设主题 (Preset Themes)</div>
+                <div style={{ background: 'var(--bg)', padding: 12, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: 'var(--text)' }}>一键预设主题</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       type="button"
@@ -413,7 +413,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                         styleConfig: { ...form.styleConfig, btnBg: '#00563b', labelColor: '#111827', inputRadius: '9999px', btnRadius: '9999px' }
                       })}
                     >
-                      🌿 深绿
+                      深绿 Forest
                     </button>
                     <button
                       type="button"
@@ -424,7 +424,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                         styleConfig: { ...form.styleConfig, btnBg: '#2563eb', labelColor: '#1e293b', inputRadius: '12px', btnRadius: '12px' }
                       })}
                     >
-                      💙 科技蓝
+                      科技蓝 Tech
                     </button>
                     <button
                       type="button"
@@ -435,7 +435,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                         styleConfig: { ...form.styleConfig, btnBg: '#18181b', labelColor: '#27272a', inputRadius: '8px', btnRadius: '8px' }
                       })}
                     >
-                      🖤 极简黑
+                      极简黑 Minimal
                     </button>
                     <button
                       type="button"
@@ -446,14 +446,14 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                         styleConfig: { ...form.styleConfig, btnBg: '#7c3aed', labelColor: '#1e1b4b', inputRadius: '12px', btnRadius: '12px' }
                       })}
                     >
-                      💜 雅紫
+                      雅紫 Purple
                     </button>
                   </div>
                 </div>
 
                 {/* Button Section */}
-                <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--primary)' }}>🔘 提交按钮设置</div>
+                <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--text)' }}>提交按钮设置</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label" style={{ fontSize: 12 }}>按钮文案</label>
@@ -515,8 +515,8 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                 </div>
 
                 {/* Input Fields Section */}
-                <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--primary)' }}>📦 输入框设置</div>
+                <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--text)' }}>输入框设置</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label" style={{ fontSize: 12 }}>输入框字号</label>
@@ -555,8 +555,8 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                 </div>
 
                 {/* Label Typography Section */}
-                <div style={{ background: 'var(--bg-offset, #f8f9fa)', padding: 14, borderRadius: 10 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--primary)' }}>🏷️ 字段标签设置</div>
+                <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: 'var(--text)' }}>字段标签设置</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                     <div className="form-group" style={{ margin: 0 }}>
                       <label className="form-label" style={{ fontSize: 12 }}>标签颜色</label>
@@ -608,7 +608,7 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
 
                 {/* Custom CSS */}
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">💻 自定义 CSS 代码 (Custom CSS)</label>
+                  <label className="form-label">自定义 CSS 代码</label>
                   <textarea
                     className="form-input"
                     rows={4}
@@ -623,8 +623,8 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
             </div>
 
             {/* Right: Real-time Live Preview */}
-            <div className="card" style={{ position: 'sticky', top: 20 }}>
-              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="card" style={{ position: 'sticky', top: 20, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 680 }}>
+              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                 <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span>👁️ 实时效果预览</span>
                   <span style={{ fontSize: 11, background: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: 12, fontWeight: 500 }}>
@@ -660,19 +660,32 @@ function FormDetailClientContent({ initialForm }: FormDetailClientProps) {
                 </div>
               </div>
 
-              <div className="card-body" style={{ background: '#e6ede8', padding: 24, borderRadius: '0 0 12px 12px', minHeight: 520, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', transition: 'all 0.3s ease' }}>
+              <div className="card-body" style={{
+                background: 'var(--bg-offset, #f8f9fa)',
+                padding: 24,
+                borderRadius: '0 0 12px 12px',
+                flex: 1,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'stretch',
+                overflowX: 'auto'
+              }}>
                 <div style={{
                   width: previewDevice === 'mobile' ? 375 : previewDevice === 'desktop' ? 580 : '100%',
-                  transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  maxWidth: '100%',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   background: '#ffffff',
                   borderRadius: 16,
                   boxShadow: '0 10px 30px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
                   padding: 24,
-                  overflow: 'hidden'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignSelf: 'stretch',
+                  boxSizing: 'border-box'
                 }}>
                   <iframe
                     srcDoc={fullDocHtml}
-                    style={{ width: '100%', minHeight: 440, border: 'none', background: 'transparent' }}
+                    style={{ width: '100%', height: '100%', flex: 1, minHeight: 560, border: 'none', background: 'transparent' }}
                     title="Realtime Form Preview"
                   />
                 </div>

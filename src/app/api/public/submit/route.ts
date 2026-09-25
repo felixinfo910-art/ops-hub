@@ -4,6 +4,12 @@ import { sendEmail, buildSubmissionEmail, SmtpConfig } from '@/lib/email'
 import { FormField } from '@/lib/form-renderer'
 import { dispatchWebhooks } from '@/lib/webhook'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 // POST /api/public/submit
 // Public submission endpoint for form submissions
 export async function POST(req: NextRequest) {
@@ -13,7 +19,7 @@ export async function POST(req: NextRequest) {
     const { form_id, site_key, page_url, referrer, utm_source, utm_medium, utm_campaign, utm_keyword, _hp_trap, ...formData } = body
 
     if (!form_id) {
-      return NextResponse.json({ success: false, message: 'Missing form_id' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Missing form_id' }, { status: 400, headers: corsHeaders })
     }
 
     const form = await prisma.form.findUnique({
@@ -27,7 +33,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!form) {
-      return NextResponse.json({ success: false, message: 'Form not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: 'Form not found or disabled' }, { status: 404, headers: corsHeaders })
     }
 
     // Resolve website entity
@@ -126,7 +132,7 @@ export async function POST(req: NextRequest) {
         success: true,
         message: form.successMessage,
       }, {
-        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: corsHeaders,
       })
     }
 
@@ -207,10 +213,18 @@ export async function POST(req: NextRequest) {
 
     // 3. Customer Auto-Responder Email (if enabled)
     if (form.autoReplyEnabled) {
-      // Find customer email input
-      const customerEmail = formData.your_email || formData.email || formData.Email || Object.values(formData).find(v => typeof v === 'string' && v.includes('@'))
+      // Find customer email input - priority given to type === 'email' field
+      let customerEmail = ''
+      const emailField = fields.find(f => f.type === 'email')
+      if (emailField && formData[emailField.id]) {
+        customerEmail = String(formData[emailField.id]).trim()
+      }
+      if (!customerEmail) {
+        const found = formData.your_email || formData.email || formData.Email || Object.values(formData).find(v => typeof v === 'string' && v.includes('@'))
+        if (found && typeof found === 'string') customerEmail = found.trim()
+      }
 
-      if (customerEmail && typeof customerEmail === 'string') {
+      if (customerEmail && customerEmail.includes('@')) {
         const autoSubject = form.autoReplySubject || `Thank you for contacting ${website?.name || 'us'}`
         let autoBody = form.autoReplyBody || `<p>Dear Customer,</p><p>Thank you for reaching out to us. We have received your message regarding <strong>${form.name}</strong> and will get back to you shortly.</p>`
 
@@ -219,7 +233,7 @@ export async function POST(req: NextRequest) {
         }
 
         sendEmail({
-          to: customerEmail.trim(),
+          to: customerEmail,
           subject: autoSubject,
           html: autoBody,
           smtpConfig: activeSmtpConfig
@@ -231,13 +245,13 @@ export async function POST(req: NextRequest) {
       success: true,
       message: form.successMessage,
     }, {
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: corsHeaders,
     })
   } catch (error) {
     console.error('Submit error:', error)
     return NextResponse.json(
       { success: false, message: 'Server error, please try again.' },
-      { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
